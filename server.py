@@ -45,9 +45,9 @@ scheduler.enter(1/100, 1, sample_imu_data)
 # Dash Layout
 app.layout = html.Div([
     html.H1("AHC Data Collection Dashboard"),
-    dcc.Graph(id="data-plot"),
-    html.Button("Record Timestamp", id="record-btn", n_clicks=0),
+    dcc.Graph(id="data-plot", style={"width": "80%", "height": "80vh", "padding": "10px"}),
     html.Div([
+        html.Button("Record Timestamp", id="record-btn", n_clicks=0),
         html.Label("Name:"),
         dcc.Input(id="name-input", type="text", placeholder="Enter name"),
         html.Label("Age:"),
@@ -55,9 +55,17 @@ app.layout = html.Div([
         html.Label("Weight (kg):"),
         dcc.Input(id="weight-input", type="number", placeholder="Enter weight"),
         html.Button("Start Session", id="start-session-btn", n_clicks=0),
-    ]),
+    ], style={"textAlign": "center", "padding": "10px"}),
     dcc.Interval(id="update-interval", interval=100, n_intervals=0) # callback every 100ms
-])
+], style={
+    "width": "95vw", 
+    "height": "95vh",
+    "textAlign": "center",
+    "display": "flex", 
+    "flexDirection": "column", 
+    "alignItems": "center", 
+    "justifyContent": "center",
+})
 
 # Callbacks to update plots and record button presses
 @app.callback(
@@ -94,15 +102,14 @@ def update_plots(_):
         ), row=2, col=1)
 
     fig.update_layout(
-        height=800, 
-        width=1500, 
         title_text="EMG and IMU Data",
         xaxis_title="Time (s)",
         yaxis_title="EMG",
         yaxis2_title="IMU",
         xaxis = dict(
             range=[df_emg['Time'].min(), df_emg['Time'].max() + 1]
-        )
+        ),
+        margin=dict(l=20, r=20, t=40, b=20)
     )
     return fig
 
