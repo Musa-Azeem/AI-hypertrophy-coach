@@ -161,7 +161,7 @@ def record_timestamp(end_rep_markers, data_dir, n_clicks):
     if n_clicks > len(end_rep_markers):
         t = time.time()
         info = json.load(open(Path(data_dir) / 'info.json'))
-        end_rep_markers = end_rep_markers + [time.time() - info['start_time']]
+        end_rep_markers = end_rep_markers + [t - info['start_time']]
         info['end_rep_markers'] = end_rep_markers
         json.dump(info, open(Path(data_dir) / 'info.json', 'w'), indent=4)
     return end_rep_markers
