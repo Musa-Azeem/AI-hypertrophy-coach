@@ -14,19 +14,48 @@ import os
 import subprocess
 from io import StringIO
 
+from gpiozero import MCP3008
+import smbus
 
-WINDOW_TIME = 10  # seconds
+# MPU6050 I2C address
+MPU6050_ADDR = 0x68
+
+# Register addresses
+PWR_MGMT_1 = 0x6B
+ACCEL_XOUT_H = 0x3B
+GYRO_XOUT_H = 0x43
+
+bus = smbus.SMBus(1)    # initialize I2C bus
+bus.write_byte_data(MPU6050_ADDR, PWR_MGMT_1, 0)    # wake up MPU6050
+def read_imu_word(adr):
+    high = bus.read_byte_data(MPU6050_ADDR, adr)
+    low = bus.read_byte_data(MPU6050_ADDR, adr + 1)
+    value = (high << 8) + low
+    if value >= 0x8000:  # MSB is high - convert to signed
+        value = -((65535 - value) + 1)
+    return value
+
+WINDOW_TIME = 4  # seconds - for plotting
 HZ = 500 #for now, use the same HZ for both EMG and IMU
 WRITE_HZ = 100  # write to csv every 0.1s
 
+emg = MCP3008(0)
+
 # Simulated data sampling functions
 def sample_emg():
-    from random import random
-    return random()  # Simulating EMG signal
+    return emg.value * 3.3 # read value from ADC * ref voltage (3.3) to get original value
 
 def sample_imu():
-    from random import random
-    return [random() for _ in range(6)]  # Simulating IMU 6-axis data
+    # read ACC - convert to g units: (-2,+2) from (-32768, 32767)
+    acc_x = read_imu_word(ACCEL_XOUT_H) / 16384.0
+    acc_y = read_imu_word(ACCEL_XOUT_H + 2) / 16384.0
+    acc_z = read_imu_word(ACCEL_XOUT_H + 4) / 16384.0
+
+    # read GYR - convert to deg/s: (-250, 250) from (-32768, 32767)
+    gyr_x = read_imu_word(GYRO_XOUT_H) / 131.0
+    gyr_y = read_imu_word(GYRO_XOUT_H + 2) / 131.0
+    gyr_z = read_imu_word(GYRO_XOUT_H + 4) / 131.0
+    return [acc_x, acc_y, acc_z, gyr_x, gyr_y, gyr_z]
 
 # Sample data scheduler
 def run_sampling_thread(data_dir, start_time, hz):
@@ -125,7 +154,7 @@ def update_plots(n_intervals, data_dir):
         )
 
     fig = subplots.make_subplots(
-        rows=2, 
+        rows=3, 
         cols=1, 
         shared_xaxes=True, 
         vertical_spacing=0.1,
@@ -134,10 +163,14 @@ def update_plots(n_intervals, data_dir):
     fig.add_trace(go.Scatter(
         x=df['time'], y=df['emg_env'], mode='lines', name='EMG'
     ), row=1, col=1)
-    for col in ['acc_x', 'acc_y', 'acc_z', 'gyr_x', 'gyr_y', 'gyr_z']:
+    for col in ['acc_x', 'acc_y', 'acc_z']:
         fig.add_trace(go.Scatter(
             x=df['time'], y=df[col], mode='lines', name=col
         ), row=2, col=1)
+    for col in ['gyr_x', 'gyr_y', 'gyr_z']:
+        fig.add_trace(go.Scatter(
+            x=df['time'], y=df[col], mode='lines', name=col
+        ), row=3, col=1)
 
     fig.update_layout(
         title_text="EMG and IMU Data",

@@ -2,3 +2,8 @@ pandas
 numpy
 dash
 plotly
+
+gpiozero
+lgpio
+
+smbus
