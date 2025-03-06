@@ -6,8 +6,9 @@ from gpiozero import MCP3008
 from time import sleep
 
 # refers to MCP3008 channel 0
-pot = MCP3008(1)
+emg = MCP3008(0)
 
 while True:
-    print(pot.value)
+    val = emg.value * 3.3
+    print(val)
     sleep(1)

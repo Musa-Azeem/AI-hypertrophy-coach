@@ -80,7 +80,7 @@ app.layout = html.Div([
         dcc.Input(id="weight-input", type="number", placeholder="Enter weight"),
         html.Button("Start Session", id="start-session-btn", n_clicks=0),
     ], style={"textAlign": "center", "padding": "10px"}),
-    dcc.Interval(id="update-interval", interval=100, n_intervals=0),
+    dcc.Interval(id="update-interval", interval=500, n_intervals=0),
     # dcc.Interval(id="update-interval", interval=WRITE_HZ, n_intervals=0),
     dcc.Store(id="data_dir", data=None),
     dcc.Store(id="end_rep_markers", data=[]),
@@ -180,8 +180,8 @@ def start_session(n_clicks, data_dir, name, age, weight):
         if not name or not age or not weight:
             return no_update
 
-        directory = Path(f'{name}-{datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}')
-        directory.mkdir(exist_ok=True)
+        directory = Path(f'recordings/{name}-{datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}')
+        directory.mkdir(exist_ok=True, parents=True)
         json.dump(dict(
             name=name,
             age=age,
@@ -193,4 +193,4 @@ def start_session(n_clicks, data_dir, name, age, weight):
     return no_update
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(host='0.0.0.0')
