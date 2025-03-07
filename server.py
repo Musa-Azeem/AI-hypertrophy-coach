@@ -47,6 +47,7 @@ def sample_emg():
 
 def sample_imu():
     # read ACC - convert to g units: (-2,+2) from (-32768, 32767)
+    # TODO move these operations to somewhere else to speed up sampling
     acc_x = read_imu_word(ACCEL_XOUT_H) / 16384.0
     acc_y = read_imu_word(ACCEL_XOUT_H + 2) / 16384.0
     acc_z = read_imu_word(ACCEL_XOUT_H + 4) / 16384.0
@@ -105,8 +106,10 @@ app.layout = html.Div([
         dcc.Input(id="name-input", type="text", placeholder="Enter name"),
         html.Label("Age:"),
         dcc.Input(id="age-input", type="number", placeholder="Enter age"),
-        html.Label("Weight (kg):"),
+        html.Label("Weight (lb):"),
         dcc.Input(id="weight-input", type="number", placeholder="Enter weight"),
+        html.Label("Sex:"),
+        dcc.Input(id="sex-input", type="text", placeholder="Enter sex"),
         html.Button("Start Session", id="start-session-btn", n_clicks=0),
     ], style={"textAlign": "center", "padding": "10px"}),
     dcc.Interval(id="update-interval", interval=500, n_intervals=0),
@@ -158,7 +161,7 @@ def update_plots(n_intervals, data_dir):
         cols=1, 
         shared_xaxes=True, 
         vertical_spacing=0.1,
-        subplot_titles=("EMG", "IMU"),
+        subplot_titles=("EMG", "Accelerometer", "Gyroscope"),
     )
     fig.add_trace(go.Scatter(
         x=df['time'], y=df['emg_env'], mode='lines', name='EMG'
@@ -176,7 +179,8 @@ def update_plots(n_intervals, data_dir):
         title_text="EMG and IMU Data",
         xaxis_title="Time (s)",
         yaxis_title="EMG",
-        yaxis2_title="IMU",
+        yaxis2_title="deg/s",
+        yaxis3_title="g m/s^2",
         xaxis = dict(
             range=[df['time'].min(), df['time'].min() + WINDOW_TIME],
         ),
@@ -206,9 +210,10 @@ def record_timestamp(end_rep_markers, data_dir, n_clicks):
     State("name-input", "value"),
     State("age-input", "value"),
     State("weight-input", "value"),
+    State("sex-input", "value"),
     prevent_initial_call=True
 )
-def start_session(n_clicks, data_dir, name, age, weight):
+def start_session(n_clicks, data_dir, name, age, weight, sex):
     if n_clicks > 0 and data_dir is None:
         if not name or not age or not weight:
             return no_update
@@ -219,6 +224,7 @@ def start_session(n_clicks, data_dir, name, age, weight):
             name=name,
             age=age,
             weight=weight,
+            sex=sex,
             start_time=time.time()
         ), open(directory / 'info.json', 'w'), indent=4)
         run_sampling_thread(directory, time.time(), HZ)
