@@ -246,7 +246,7 @@ def start_session(n_clicks, data_dir, name, age, weight, sex, location, machine_
             sex=sex,
             location=location,
             machine_weight=machine_weight,
-            start_time=time.time()
+            start_time=time.time(),
             notes="",
         )
         json.dump(info, open(directory / 'info.json', 'w'), indent=4)
