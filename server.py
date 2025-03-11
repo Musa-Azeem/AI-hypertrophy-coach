@@ -17,6 +17,10 @@ from io import StringIO
 from gpiozero import MCP3008
 import smbus
 
+WINDOW_TIME = 4     # seconds - for plotting
+HZ = 500            #for now, use the same HZ for both EMG and IMU
+WRITE_HZ = 2        # write to csv every 0.5s
+
 # MPU6050 I2C address
 MPU6050_ADDR = 0x68
 
@@ -34,10 +38,6 @@ def read_imu_word(adr):
     if value >= 0x8000:  # MSB is high - convert to signed
         value = -((65535 - value) + 1)
     return value
-
-WINDOW_TIME = 4  # seconds - for plotting
-HZ = 500 #for now, use the same HZ for both EMG and IMU
-WRITE_HZ = 100  # write to csv every 0.1s
 
 emg = MCP3008(0)
 
@@ -59,7 +59,7 @@ def sample_imu():
     return [acc_x, acc_y, acc_z, gyr_x, gyr_y, gyr_z]
 
 # Sample data scheduler
-def run_sampling_thread(data_dir, start_time, hz):
+def run_sampling_thread(data_dir, start_time, hz, write_hz):
     def run():
         sensor_data = []
         scheduler = sched.scheduler(time.time, time.sleep)
@@ -79,11 +79,11 @@ def run_sampling_thread(data_dir, start_time, hz):
                 df.to_csv(data_dir / fn, index=False)
             else:
                 df.to_csv(data_dir / fn, mode='a', header=False, index=False)
-            sensor_data.clear()
-            scheduler.enter(1/WRITE_HZ, 2, write_csv) # write to csv every 0.1s
+            sensor_data[:df.shape[0]] = []
+            scheduler.enter(1/write_hz, 2, write_csv) # write to csv every 0.1s
 
-        scheduler.enter(1/HZ, 1, sample_data)
-        scheduler.enter(1/WRITE_HZ, 2, write_csv)
+        scheduler.enter(1/hz, 1, sample_data)
+        scheduler.enter(1/write_hz, 2, write_csv)
         scheduler.run()
 
     threading.Thread(target=run, daemon=True).start()
@@ -113,7 +113,6 @@ app.layout = html.Div([
         html.Button("Start Session", id="start-session-btn", n_clicks=0),
     ], style={"textAlign": "center", "padding": "10px"}),
     dcc.Interval(id="update-interval", interval=500, n_intervals=0),
-    # dcc.Interval(id="update-interval", interval=WRITE_HZ, n_intervals=0),
     dcc.Store(id="data_dir", data=None),
     dcc.Store(id="end_rep_markers", data=[]),
 ], style={
@@ -227,7 +226,7 @@ def start_session(n_clicks, data_dir, name, age, weight, sex):
             sex=sex,
             start_time=time.time()
         ), open(directory / 'info.json', 'w'), indent=4)
-        run_sampling_thread(directory, time.time(), HZ)
+        run_sampling_thread(directory, time.time(), HZ, WRITE_HZ)
         return str(directory)
     return no_update
 
