@@ -1,3 +1,4 @@
 env
 .venv
 recordings
+last_info.json
