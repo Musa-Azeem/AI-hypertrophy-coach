@@ -18,7 +18,7 @@ from gpiozero import MCP3008
 import smbus
 
 WINDOW_TIME = 4     # seconds - for plotting
-HZ = 500            #for now, use the same HZ for both EMG and IMU
+HZ = 250            # In practice, this is about 100 Hz - TODO: fix this
 WRITE_HZ = 2        # write to csv every 0.5s
 
 # MPU6050 I2C address
@@ -96,22 +96,40 @@ def run_scheduler_thread(schedular):
 
 app = dash.Dash(__name__)
 
+last_info = json.load(open('last_info.json', 'r')) if Path('last_info.json').exists() else {}
+
 # Dash Layout
 app.layout = html.Div([
     html.H1("AHC Data Collection Dashboard"),
     dcc.Graph(id="data-plot", style={"width": "80%", "height": "80vh", "padding": "10px"}),
     html.Div([
-        html.Button("Report End of Rep", id="record-btn", n_clicks=0),
-        html.Label("Name:"),
-        dcc.Input(id="name-input", type="text", placeholder="Enter name"),
-        html.Label("Age:"),
-        dcc.Input(id="age-input", type="number", placeholder="Enter age"),
-        html.Label("Weight (lb):"),
-        dcc.Input(id="weight-input", type="number", placeholder="Enter weight"),
-        html.Label("Sex:"),
-        dcc.Input(id="sex-input", type="text", placeholder="Enter sex"),
-        html.Button("Start Session", id="start-session-btn", n_clicks=0),
-    ], style={"textAlign": "center", "padding": "10px"}),
+        html.Button("Report End of Rep", id="record-btn", n_clicks=0, style={"marginBottom": "10px"}),
+        html.Div([
+            html.Label("Name:"),
+            dcc.Input(id="name-input", type="text", placeholder="Enter name", value=last_info.get("name")),
+        ], className="input-group"),
+        html.Div([
+            html.Label("Age:"),
+            dcc.Input(id="age-input", type="number", placeholder="Enter age", value=last_info.get("age")),
+        ], className="input-group"),
+        html.Div([
+            html.Label("Weight (lb):"),
+            dcc.Input(id="weight-input", type="number", placeholder="Enter weight", value=last_info.get("weight")),
+        ], className="input-group"),
+        html.Div([
+            html.Label("Sex:"),
+            dcc.Input(id="sex-input", type="text", placeholder="Enter sex", value=last_info.get("sex")),
+        ], className="input-group"),
+        html.Div([
+            html.Label("Location:"),
+            dcc.Input(id="location-input", type="text", placeholder="Enter location", value=last_info.get("location")),
+        ], className="input-group"),
+        html.Div([
+            html.Label("Machine Weight (lb)"),
+            dcc.Input(id="machine-weight-input", type="number", placeholder="Enter machine weight", value=last_info.get("machine_weight")),
+        ], className="input-group"),
+        html.Button("Start Session", id="start-session-btn", n_clicks=0, style={"marginTop": "15px"}),
+    ], className="form-container"),
     dcc.Interval(id="update-interval", interval=500, n_intervals=0),
     dcc.Store(id="data_dir", data=None),
     dcc.Store(id="end_rep_markers", data=[]),
@@ -176,7 +194,7 @@ def update_plots(n_intervals, data_dir):
 
     fig.update_layout(
         title_text="EMG and IMU Data",
-        xaxis_title="Time (s)",
+        xaxis3_title="Time (s)",
         yaxis_title="EMG",
         yaxis2_title="deg/s",
         yaxis3_title="g m/s^2",
@@ -210,22 +228,29 @@ def record_timestamp(end_rep_markers, data_dir, n_clicks):
     State("age-input", "value"),
     State("weight-input", "value"),
     State("sex-input", "value"),
+    State("location-input", "value"),
+    State("machine-weight-input", "value"),
     prevent_initial_call=True
 )
-def start_session(n_clicks, data_dir, name, age, weight, sex):
+def start_session(n_clicks, data_dir, name, age, weight, sex, location, machine_weight):
     if n_clicks > 0 and data_dir is None:
         if not name or not age or not weight:
             return no_update
 
         directory = Path(f'recordings/{name}-{datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}')
         directory.mkdir(exist_ok=True, parents=True)
-        json.dump(dict(
+        info = dict(
             name=name,
             age=age,
             weight=weight,
             sex=sex,
+            location=location,
+            machine_weight=machine_weight,
             start_time=time.time()
-        ), open(directory / 'info.json', 'w'), indent=4)
+            notes="",
+        )
+        json.dump(info, open(directory / 'info.json', 'w'), indent=4)
+        json.dump(info, open('last_info.json', 'w'), indent=4)
         run_sampling_thread(directory, time.time(), HZ, WRITE_HZ)
         return str(directory)
     return no_update
