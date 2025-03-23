@@ -3,3 +3,5 @@ env
 recordings
 last_info.json
 update.bundle
+data
+*.pth

@@ -4,3 +4,5 @@ dash
 plotly
 ipykernel
 seaborn
+torch
+scikit-learn
