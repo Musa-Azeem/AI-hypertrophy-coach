@@ -14,7 +14,7 @@ import os
 import subprocess
 from io import StringIO
 
-from gpiozero import MCP3008
+import spidev
 import smbus
 
 WINDOW_TIME = 4     # seconds - for plotting
@@ -39,23 +39,29 @@ def read_imu_word(adr):
         value = -((65535 - value) + 1)
     return value
 
-emg = MCP3008(0)
+# Initialize SPI (for EMG)
+spi = spidev.SpiDev()
+spi.open(0, 0)  # Open SPI bus 0, device (CS) 0
+spi.max_speed_hz = 1350000  # 1.35 MHz
+channel = 0
 
-# Simulated data sampling functions
 def sample_emg():
-    return emg.value * 3.3 # read value from ADC * ref voltage (3.3) to get original value
+    adc = spi.xfer2([1, (8 + channel) << 4, 0])
+    value = ((adc[1] & 3) << 8) | adc[2] # 10-bit value from MCP3008 (0-1023)
+    return value
 
 def sample_imu():
-    # read ACC - convert to g units: (-2,+2) from (-32768, 32767)
-    # TODO move these operations to somewhere else to speed up sampling
-    acc_x = read_imu_word(ACCEL_XOUT_H) / 16384.0
-    acc_y = read_imu_word(ACCEL_XOUT_H + 2) / 16384.0
-    acc_z = read_imu_word(ACCEL_XOUT_H + 4) / 16384.0
+    # read ACC - current units are (-32768, 32767) - need to later convert to 
+    # g units (-2,+2) by dividing by 16384.0
+    acc_x = read_imu_word(ACCEL_XOUT_H)
+    acc_y = read_imu_word(ACCEL_XOUT_H + 2)
+    acc_z = read_imu_word(ACCEL_XOUT_H + 4)
 
-    # read GYR - convert to deg/s: (-250, 250) from (-32768, 32767)
-    gyr_x = read_imu_word(GYRO_XOUT_H) / 131.0
-    gyr_y = read_imu_word(GYRO_XOUT_H + 2) / 131.0
-    gyr_z = read_imu_word(GYRO_XOUT_H + 4) / 131.0
+    # read GYR - current units are (-32768, 32767) - need to layer convert to
+    # deg/s: (-250, 250) by dividing by 131.0 
+    gyr_x = read_imu_word(GYRO_XOUT_H)
+    gyr_y = read_imu_word(GYRO_XOUT_H + 2)
+    gyr_z = read_imu_word(GYRO_XOUT_H + 4)
     return [acc_x, acc_y, acc_z, gyr_x, gyr_y, gyr_z]
 
 # Sample data scheduler
@@ -87,12 +93,6 @@ def run_sampling_thread(data_dir, start_time, hz, write_hz):
         scheduler.run()
 
     threading.Thread(target=run, daemon=True).start()
-    
-
-def run_scheduler_thread(schedular):
-    def run():
-        schedular.run()
-
 
 app = dash.Dash(__name__)
 
@@ -185,11 +185,11 @@ def update_plots(n_intervals, data_dir):
     ), row=1, col=1)
     for col in ['acc_x', 'acc_y', 'acc_z']:
         fig.add_trace(go.Scatter(
-            x=df['time'], y=df[col], mode='lines', name=col
+            x=df['time'], y=df[col] / 16384.0, mode='lines', name=col
         ), row=2, col=1)
     for col in ['gyr_x', 'gyr_y', 'gyr_z']:
         fig.add_trace(go.Scatter(
-            x=df['time'], y=df[col], mode='lines', name=col
+            x=df['time'], y=df[col] / 131.0, mode='lines', name=col
         ), row=3, col=1)
 
     fig.update_layout(
@@ -246,7 +246,7 @@ def start_session(n_clicks, data_dir, name, age, weight, sex, location, machine_
             sex=sex,
             location=location,
             machine_weight=machine_weight,
-            start_time=time.time()
+            start_time=time.time(),
             notes="",
         )
         json.dump(info, open(directory / 'info.json', 'w'), indent=4)
@@ -256,4 +256,8 @@ def start_session(n_clicks, data_dir, name, age, weight, sex, location, machine_
     return no_update
 
 if __name__ == "__main__":
-    app.run_server(host='0.0.0.0')
+    try:
+        app.run_server(host='0.0.0.0')
+    except KeyboardInterrupt:
+        print("Stopping...")
+        spi.close()
