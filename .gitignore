@@ -1,5 +1,6 @@
 env
 .venv
-recordings
+recordings*
 last_info.json
 update.bundle
+spidev

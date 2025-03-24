@@ -26,19 +26,29 @@ def read_word(adr):
         value = -((65535 - value) + 1)
     return value
 
-while True:
-    # Read Accelerometer data
-    accel_x = read_word(ACCEL_XOUT_H) / 16384.0
-    accel_y = read_word(ACCEL_XOUT_H + 2) / 16384.0
-    accel_z = read_word(ACCEL_XOUT_H + 4) / 16384.0
+HZ = 1000
+interval = 1.0 / HZ
+with open('imu.csv', 'w') as f:
+    f.write('time\n')
+    while True:
+        loop_start = time.perf_counter()
 
-    # Read Gyroscope data
-    gyro_x = read_word(GYRO_XOUT_H) / 131.0
-    gyro_y = read_word(GYRO_XOUT_H + 2) / 131.0
-    gyro_z = read_word(GYRO_XOUT_H + 4) / 131.0
+        # Read Accelerometer data
+        accel_x = read_word(ACCEL_XOUT_H) / 16384.0
+        accel_y = read_word(ACCEL_XOUT_H + 2) / 16384.0
+        accel_z = read_word(ACCEL_XOUT_H + 4) / 16384.0
 
-    print(f"Accel X: {accel_x} g, Y: {accel_y} g, Z: {accel_z} g")
-    print(f"Gyro X: {gyro_x} deg/s, Y: {gyro_y} deg/s, Z: {gyro_z} deg/s")
-    print("-" * 40)
+        # Read Gyroscope data
+        gyro_x = read_word(GYRO_XOUT_H) / 131.0
+        gyro_y = read_word(GYRO_XOUT_H + 2) / 131.0
+        gyro_z = read_word(GYRO_XOUT_H + 4) / 131.0
 
-    time.sleep(0.5)
+        # print(f"Accel X: {accel_x} g, Y: {accel_y} g, Z: {accel_z} g")
+        # print(f"Gyro X: {gyro_x} deg/s, Y: {gyro_y} deg/s, Z: {gyro_z} deg/s")
+        # print("-" * 40)
+
+        f.write(f'{time.time()}\n')
+
+        elapsed_time = time.perf_counter() - loop_start
+        sleep_time = max(0, interval - elapsed_time)
+        time.sleep(sleep_time)
