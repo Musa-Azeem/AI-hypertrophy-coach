@@ -18,7 +18,7 @@ import spidev
 import smbus
 
 WINDOW_TIME = 4     # seconds - for plotting
-EMG_HZ = 2000       # In practice, this is about 100 Hz - TODO: fix this
+EMG_HZ = 2000       # In practice, this is about 1000 Hz - TODO: fix this
 IMU_HZ = 200    
 WRITE_HZ = 2        # write to csv every 0.5s
 
@@ -47,6 +47,8 @@ spi.max_speed_hz = 1350000  # 1.35 MHz
 channel = 0
 
 def sample_emg():
+    # Read EMG Env - current units are (0,1023) - need to later convert to
+    # 0-1 by dividing by 1023
     adc = spi.xfer2([1, (8 + channel) << 4, 0])
     value = ((adc[1] & 3) << 8) | adc[2] # 10-bit value from MCP3008 (0-1023)
     return value
@@ -280,7 +282,7 @@ def update_plots(n_intervals, data_dir):
         subplot_titles=("EMG", "Accelerometer", "Gyroscope"),
     )
     fig.add_trace(go.Scatter(
-        x=emg['time'], y=emg['emg_env'], mode='lines', name='EMG'
+        x=emg['time'], y=emg['emg_env'] / 1023 * 5.0, mode='lines', name='EMG'
     ), row=1, col=1)
     for col in ['acc_x', 'acc_y', 'acc_z']:
         fig.add_trace(go.Scatter(
