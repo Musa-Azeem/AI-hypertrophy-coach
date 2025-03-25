@@ -26,7 +26,7 @@ def read_word(adr):
         value = -((65535 - value) + 1)
     return value
 
-HZ = 1000
+HZ = 100
 interval = 1.0 / HZ
 with open('imu.csv', 'w') as f:
     f.write('time\n')
@@ -48,6 +48,7 @@ with open('imu.csv', 'w') as f:
         # print("-" * 40)
 
         f.write(f'{time.time()}\n')
+        print(accel_x)
 
         elapsed_time = time.perf_counter() - loop_start
         sleep_time = max(0, interval - elapsed_time)

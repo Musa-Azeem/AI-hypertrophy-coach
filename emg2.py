@@ -34,6 +34,7 @@ try:
 
             channel_0_value = read_adc(0)  # Read channel 0
             f.write(f'{time.time()},{channel_0_value}\n')
+            print(channel_0_value / 1023 * 5)
             
             # time.sleep(1/1000)
             elapsed_time = time.perf_counter() - loop_start
