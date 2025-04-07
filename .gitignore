@@ -5,3 +5,4 @@ last_info.json
 update.bundle
 spidev
 data
+*.csv
