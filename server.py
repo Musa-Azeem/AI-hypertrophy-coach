@@ -43,7 +43,7 @@ def read_imu_word(adr):
 # Initialize SPI (for EMG)
 spi = spidev.SpiDev()
 spi.open(0, 0)  # Open SPI bus 0, device (CS) 0
-spi.max_speed_hz = 1350000  # 1.35 MHz
+spi.max_speed_hz = 1000000  # 1.35 MHz
 channel = 0
 
 def sample_emg():
@@ -64,44 +64,13 @@ def sample_imu():
     acc_y = read_imu_word(ACCEL_YOUT_H)
     acc_z = read_imu_word(ACCEL_ZOUT_H)
 
-    # read GYR - current units are (-32768, 32767) - need to layer convert to
+    # read GYR - current units are (-32768, 32767) - need to later convert to
     # deg/s: (-250, 250) by dividing by 131.0 
     gyr_x = read_imu_word(GYRO_XOUT_H)
     gyr_y = read_imu_word(GYRO_YOUT_H)
     gyr_z = read_imu_word(GYRO_ZOUT_H)
     return [acc_x, acc_y, acc_z, gyr_x, gyr_y, gyr_z]
 
-# Sample data scheduler
-# def run_sampling_thread(data_dir, start_time, hz, write_hz):
-#     def run():
-#         sensor_data = []
-#         scheduler = sched.scheduler(time.time, time.sleep)
-
-#         def sample_data():
-#             sensor_data.append((time.time() - start_time, sample_emg(), *sample_imu()))
-#             scheduler.enter(1/hz, 1, sample_data)
-
-#         def write_csv():
-#             fn = 'data.csv'
-#             columns = ['time', 'emg_env', 'acc_x', 'acc_y', 'acc_z', 'gyr_x', 'gyr_y', 'gyr_z']
-#             df = pd.DataFrame(
-#                 sensor_data, 
-#                 columns=columns
-#             )
-#             if not (data_dir / fn).exists():
-#                 df.to_csv(data_dir / fn, index=False)
-#             else:
-#                 df.to_csv(data_dir / fn, mode='a', header=False, index=False)
-#             sensor_data[:df.shape[0]] = []
-#             scheduler.enter(1/write_hz, 2, write_csv) # write to csv every 0.1s
-
-#         scheduler.enter(1/hz, 1, sample_data)
-#         scheduler.enter(1/write_hz, 2, write_csv)
-#         scheduler.run()
-
-#     threading.Thread(target=run, daemon=True).start()
-
-# Sample data scheduler
 def run_sampling_thread(data_dir, start_time, emg_hz, imu_hz, write_hz):
     emg_data = []
     imu_data = []
@@ -142,7 +111,7 @@ def run_sampling_thread(data_dir, start_time, emg_hz, imu_hz, write_hz):
     emg_interval = 1.0 / emg_hz
     n_iter_write_emg = emg_hz / write_hz # number of iterations to wait before writing
     n_iter_imu = emg_hz / imu_hz
-    def run_emg():
+    def run():
         i = 0
         while True:
             loop_start = time.perf_counter()
@@ -160,25 +129,7 @@ def run_sampling_thread(data_dir, start_time, emg_hz, imu_hz, write_hz):
             sleep_time = max(0, emg_interval - elapsed_time)
             time.sleep(sleep_time)
 
-    imu_interval = 1.0 / imu_hz
-    n_iter_write_imu = imu_hz / write_hz # number of iterations to wait before writing
-    def run_imu():
-        i = 0
-        while True:
-            loop_start = time.perf_counter()
-
-            read_imu()
-
-            if i == n_iter_write_imu:
-                write_imu_csv()
-                i = 0
-            i += 1
-            elapsed_time = time.perf_counter() - loop_start
-            sleep_time = max(0, imu_interval - elapsed_time)
-            time.sleep(sleep_time)
-
-    threading.Thread(target=run_emg, daemon=True).start()
-    # threading.Thread(target=run_imu, daemon=True).start()
+    threading.Thread(target=run, daemon=True).start()
 
 app = dash.Dash(__name__)
 

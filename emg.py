@@ -12,6 +12,7 @@ emg = MCP3008(0)
 with open('recordings2/curl.csv', 'w') as f:
     f.write(f'time,emg')
     while True:
-        val = emg.value * 3.3
+        val = emg.value * 5
         f.write(f'{time.time()},{val}\n')
-        sleep(1/100)
+        print(val)
+        sleep(1/1000)
