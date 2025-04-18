@@ -258,25 +258,27 @@ def objective(trial):
     outdir = OUTDIR / f'{trial.number}'
     writer = SummaryWriter(outdir)
 
-    n_stages = trial.suggest_int("n_stages", 3, 10)
+    n_stages = trial.suggest_int("n_stages", 5, 10)
     config = dict(
-        stem_out_c = 2**trial.suggest_int("stem_out_c", 1, 10),
+        stem_out_c = 2**trial.suggest_int("stem_out_c", 5, 10),
         depth = [trial.suggest_int(f"depth_{i}", 1, 2) for i in range(n_stages)],
-        width = [2**trial.suggest_int(f"width_{i}", 2, 10) for i in range(n_stages)],
+        width = [2**trial.suggest_int(f"width_{i}", 5, 10) for i in range(n_stages-1)],
         stem_kernel = trial.suggest_int("stem_kernel", 3, 7, step=2),
         learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-2, log=True),
         weight_decay = trial.suggest_float("weight_decay", 1e-5, 1e-2, log=True),
         dropout = trial.suggest_float("dropout", 0.0, 0.25),
-        batch_size = 2**trial.suggest_int("batch_size", 5, 8),
+        batch_size = 128,#2**trial.suggest_int("batch_size", 5, 8),
         device = DEVICE,
     )
+    config['width'].append(2**trial.suggest_int("width_last", 7, 10)) # last width determines linear layer input size
+
     device = config['device']
 
     trainloader = DataLoader(train_dataset, batch_size=config['batch_size'], shuffle=True)
     valloader = DataLoader(val_dataset, batch_size=config['batch_size'], shuffle=False)
 
     model = ConvNet(config).to(device)
-    criterion = SegmentationLoss(0.8, 4, device)
+    criterion = SegmentationLoss(0.8, 2, device)
     optimizer = torch.optim.Adam(model.parameters(), lr=config['learning_rate'], weight_decay=config['weight_decay'])
 
     print(f'Trial: {trial.number} - {sum(p.numel() for p in model.parameters() if p.requires_grad)} parameters - k {config["stem_kernel"]} - stem: {config["stem_out_c"]} - depth: {config["depth"]} - width: {config["width"]} - lr: {config["learning_rate"]:.4f} - weight_decay: {config["weight_decay"]:.4f} - dropout: {config["dropout"]:.2f} - batch_size: {config["batch_size"]}')
