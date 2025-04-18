@@ -6,3 +6,5 @@ update.bundle
 data
 *.pth
 *.png
+logs
+*.db
