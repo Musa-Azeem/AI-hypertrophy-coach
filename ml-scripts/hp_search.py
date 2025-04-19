@@ -17,7 +17,7 @@ import json
 import logging
 import sys
 
-STUDY_NAME = 'search'
+STUDY_NAME = 'search256'
 OUTDIR = Path(f'logs/{STUDY_NAME}')
 DEVICE = 'cuda:0'
 EPOCHS = 300
@@ -116,7 +116,7 @@ df[['gyr_x', 'gyr_y', 'gyr_z']] = (df[['gyr_x', 'gyr_y', 'gyr_z']] / 250.0).clip
 # stride_t = 0.01 # seconds
 # winsize = int(winsize_t * HZ)
 # stride = int(stride_t * HZ)
-winsize = 1024
+winsize = 256
 stride = 2
 print(winsize, stride)
 
@@ -239,9 +239,9 @@ def iou_metric(ypred, y_true):
     return iou.mean()
 
 class SegmentationLoss(nn.Module):
-    def __init__(self, alpha, pos_weight, device):
+    def __init__(self, alpha):
         super().__init__()
-        self.cat_criterion = nn.BCEWithLogitsLoss(pos_weight=torch.Tensor([pos_weight])).to(device)
+        self.cat_criterion = nn.BCEWithLogitsLoss()
         self.reg_criterion = nn.MSELoss()
         # self.iou_criterion = iou_metric
         self.alpha = alpha
@@ -249,26 +249,25 @@ class SegmentationLoss(nn.Module):
         probs = F.sigmoid(ypred)
         cat_loss = self.cat_criterion(ypred, y_true)
         reg_loss = self.reg_criterion(probs, y_true)
-        # iou_loss = self.iou_criterion(probs.round(), y_true)
-
-        # return 0.34*cat_loss + 0.33*reg_loss + 0.33*iou_loss
         return self.alpha*cat_loss + (1-self.alpha)*reg_loss
 
 def objective(trial):
     outdir = OUTDIR / f'{trial.number}'
     writer = SummaryWriter(outdir)
 
-    n_stages = trial.suggest_int("n_stages", 5, 10)
+    n_stages = trial.suggest_int("n_stages", 3, 6)
     config = dict(
-        stem_out_c = 2**trial.suggest_int("stem_out_c", 5, 10),
+        stem_out_c = 2**trial.suggest_int("stem_out_c", 6, 10),
         depth = [trial.suggest_int(f"depth_{i}", 1, 2) for i in range(n_stages)],
-        width = [2**trial.suggest_int(f"width_{i}", 5, 10) for i in range(n_stages-1)],
+        width = [2**trial.suggest_int(f"width_{i}", 6, 10) for i in range(n_stages-1)],
         stem_kernel = trial.suggest_int("stem_kernel", 3, 7, step=2),
         learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-2, log=True),
         weight_decay = trial.suggest_float("weight_decay", 1e-5, 1e-2, log=True),
         dropout = trial.suggest_float("dropout", 0.0, 0.25),
         batch_size = 128,#2**trial.suggest_int("batch_size", 5, 8),
         device = DEVICE,
+        train_winsize = winsize,
+        train_stride = stride
     )
     config['width'].append(2**trial.suggest_int("width_last", 7, 10)) # last width determines linear layer input size
 
@@ -278,7 +277,7 @@ def objective(trial):
     valloader = DataLoader(val_dataset, batch_size=config['batch_size'], shuffle=False)
 
     model = ConvNet(config).to(device)
-    criterion = SegmentationLoss(0.8, 2, device)
+    criterion = SegmentationLoss(0.8)
     optimizer = torch.optim.Adam(model.parameters(), lr=config['learning_rate'], weight_decay=config['weight_decay'])
 
     print(f'Trial: {trial.number} - {sum(p.numel() for p in model.parameters() if p.requires_grad)} parameters - k {config["stem_kernel"]} - stem: {config["stem_out_c"]} - depth: {config["depth"]} - width: {config["width"]} - lr: {config["learning_rate"]:.4f} - weight_decay: {config["weight_decay"]:.4f} - dropout: {config["dropout"]:.2f} - batch_size: {config["batch_size"]}')
@@ -287,7 +286,7 @@ def objective(trial):
     best_val_loss = np.inf
     best_val_f1 = 0
 
-    patience = 30
+    patience = 15
     early_stop = 0
     min_delta = 0.001
 
