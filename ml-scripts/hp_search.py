@@ -17,7 +17,7 @@ import json
 import logging
 import sys
 
-STUDY_NAME = 'search256'
+STUDY_NAME = 'search256-2'
 OUTDIR = Path(f'logs/{STUDY_NAME}')
 DEVICE = 'cuda:0'
 EPOCHS = 300
@@ -190,7 +190,7 @@ class Encoder(nn.Module):
         self.conv_out_channels = self.stem_out_c if len(self.width) == 0 else self.width[-1]
 
         self.encoder = nn.Sequential(
-            nn.Conv1d(in_channels, self.stem_out_c, kernel_size=self.stem_kernel, padding=3),
+            nn.Conv1d(in_channels, self.stem_out_c, kernel_size=self.stem_kernel, padding=self.stem_kernel // 2),
             nn.BatchNorm1d(self.stem_out_c),
             nn.ReLU(),
             nn.MaxPool1d(kernel_size=2, stride=2),
@@ -226,8 +226,17 @@ class ConvNet(nn.Module):
         for block in self.encoder.encoder[:stop_idx]:
             for param in block.parameters():
                 param.requires_grad = False
-        # for param in self.encoder.parameters():
-            # param.requires_grad = False
+    def get_optimizer(self, lr, weight_decay=1e-4, betas=(0.9, 0.999)):
+        # AdamW optimzer - apply weight decay to linear and conv weights
+        # but not to biases and batchnorm layers
+        params = self.named_parameters()
+        decay_params = [p for n,p in params if p.dim() >= 2]
+        no_decay_params = [p for n,p in params if p.dim() < 2]
+        optimizer = torch.optim.AdamW([
+            {'params': decay_params, 'weight_decay': weight_decay},
+            {'params': no_decay_params, 'weight_decay': 0.0}
+        ], betas=betas, lr=lr)
+        return optimizer
 
 def iou_metric(ypred, y_true):
     if y_true.ndim != 2:
@@ -256,10 +265,29 @@ def objective(trial):
     writer = SummaryWriter(outdir)
 
     n_stages = trial.suggest_int("n_stages", 3, 6)
+
+    # stem_out_c = 2**trial.suggest_int("stem_out_c", 6, 10)
+    # min_channel_width = stem_out_c
+    # width = []
+    # for i in range(n_stages -1):
+    #     while True:
+    #         widthi = trial.suggest_int(f"width_{i}", 6, 10)
+    #         print(n_stages, i, min_channel_width, widthi)
+    #         if widthi >= min_channel_width:
+    #             width.append(2**widthi)
+    #             min_channel_width = widthi
+    #             break
+    # while True:
+    #     print(n_stages, min_channel_width, widthi)
+    #     widthi = trial.suggest_int(f"width_last", 6, 10)
+    #     if widthi >= min_channel_width:
+    #         width.append(2**widthi)
+    #         break
+
     config = dict(
         stem_out_c = 2**trial.suggest_int("stem_out_c", 6, 10),
         depth = [trial.suggest_int(f"depth_{i}", 1, 2) for i in range(n_stages)],
-        width = [2**trial.suggest_int(f"width_{i}", 6, 10) for i in range(n_stages-1)],
+        width = [2**trial.suggest_int(f"width_{i}", 6, 10) for i in range(n_stages - 1)],
         stem_kernel = trial.suggest_int("stem_kernel", 3, 7, step=2),
         learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-2, log=True),
         weight_decay = trial.suggest_float("weight_decay", 1e-5, 1e-2, log=True),
@@ -278,7 +306,7 @@ def objective(trial):
 
     model = ConvNet(config).to(device)
     criterion = SegmentationLoss(0.8)
-    optimizer = torch.optim.Adam(model.parameters(), lr=config['learning_rate'], weight_decay=config['weight_decay'])
+    optimizer = model.get_optimizer(config['learning_rate'], config['weight_decay'])
 
     print(f'Trial: {trial.number} - {sum(p.numel() for p in model.parameters() if p.requires_grad)} parameters - k {config["stem_kernel"]} - stem: {config["stem_out_c"]} - depth: {config["depth"]} - width: {config["width"]} - lr: {config["learning_rate"]:.4f} - weight_decay: {config["weight_decay"]:.4f} - dropout: {config["dropout"]:.2f} - batch_size: {config["batch_size"]}')
 
