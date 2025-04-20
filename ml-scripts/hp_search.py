@@ -17,10 +17,11 @@ import json
 import logging
 import sys
 
-STUDY_NAME = 'search256-2'
+STUDY_NAME = 'search256-3'
 OUTDIR = Path(f'logs/{STUDY_NAME}')
 DEVICE = 'cuda:0'
-EPOCHS = 300
+EPOCHS = 50
+
 def moving_average(data, window_size=15):
     X_smooth = np.zeros(data.shape)
     for i,channel in enumerate(data):
@@ -111,7 +112,7 @@ class IMUDataset(Dataset):
     
 HZ = 100
 in_channels = 6
-df = pd.read_csv('../data/data.csv')
+df = pd.read_csv('data/data.csv')
 session_ids = df['session_id'].unique()
 print(len(session_ids))
 train_ids, val_ids = train_test_split(session_ids, test_size=0.2, random_state=42)
@@ -196,10 +197,7 @@ class Encoder(nn.Module):
         self.conv_out_channels = self.stem_out_c if len(self.width) == 0 else self.width[-1]
 
         self.encoder = nn.Sequential(
-            nn.Conv1d(in_channels, self.stem_out_c, kernel_size=self.stem_kernel, padding=self.stem_kernel // 2),
-            nn.BatchNorm1d(self.stem_out_c),
-            nn.ReLU(),
-            nn.MaxPool1d(kernel_size=2, stride=2),
+            ResBlock(in_channels, self.stem_out_c, kernel_size=self.stem_kernel, stride=2),
             *[DepthBlock(
                 depth=self.depth[i],
                 in_channels=self.stem_out_c if i == 0 else self.width[i-1], 
@@ -254,7 +252,7 @@ def iou_metric(ypred, y_true):
     return iou.mean()
 
 class SegmentationLoss(nn.Module):
-    def __init__(self, alpha, pos_weight, device):
+    def __init__(self, alpha):
         super().__init__()
         # self.cat_criterion = nn.BCEWithLogitsLoss(pos_weight=torch.Tensor([pos_weight])).to(device)
         self.cat_criterion = nn.BCEWithLogitsLoss()
@@ -272,22 +270,25 @@ def objective(trial):
     outdir = OUTDIR / f'{trial.number}'
     writer = SummaryWriter(outdir)
 
-    n_stages = trial.suggest_int("n_stages", 3, 6)
-
+    n_stages = 6
+    stem_out_c = trial.suggest_int("stem_out_c", 6, 8)
+    width_last = trial.suggest_int("width_last", 7, 9)
+    if width_last < stem_out_c:
+        width_last = stem_out_c
+    width = (2**np.linspace(stem_out_c, width_last, n_stages-1, dtype=int)).tolist()
     config = dict(
-        stem_out_c = 2**trial.suggest_int("stem_out_c", 6, 10),
+        stem_out_c = 2**stem_out_c,
         depth = [trial.suggest_int(f"depth_{i}", 1, 2) for i in range(n_stages)],
-        width = [2**trial.suggest_int(f"width_{i}", 6, 10) for i in range(n_stages - 1)],
-        stem_kernel = trial.suggest_int("stem_kernel", 3, 7, step=2),
-        learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-2, log=True),
-        weight_decay = trial.suggest_float("weight_decay", 1e-5, 1e-2, log=True),
-        dropout = trial.suggest_float("dropout", 0.0, 0.25),
-        batch_size = 128,#2**trial.suggest_int("batch_size", 5, 8),
+        width = width + [2**width_last],
+        stem_kernel = 7,
+        learning_rate = trial.suggest_float("learning_rate", 1e-3, 5e-3, log=True),
+        weight_decay = trial.suggest_float("weight_decay", 1e-4, 5e-3, log=True),
+        dropout = trial.suggest_float("dropout", 0.1, 0.2),
+        batch_size = 128,
         device = DEVICE,
         train_winsize = winsize,
         train_stride = stride
     )
-    config['width'].append(2**trial.suggest_int("width_last", 7, 10)) # last width determines linear layer input size
 
     device = config['device']
 
