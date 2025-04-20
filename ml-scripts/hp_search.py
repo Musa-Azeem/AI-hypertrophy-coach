@@ -21,7 +21,6 @@ STUDY_NAME = 'search256-2'
 OUTDIR = Path(f'logs/{STUDY_NAME}')
 DEVICE = 'cuda:0'
 EPOCHS = 300
-
 def moving_average(data, window_size=15):
     X_smooth = np.zeros(data.shape)
     for i,channel in enumerate(data):
@@ -55,13 +54,17 @@ def warp_time(data, label, max_scale=1.5):
 def scale(data, low=0.6, high=1.4):
     return data*np.random.uniform(low, high)
 
-def segment_y(y, t=40):
+def segment_y(y, t=40, label_end=False):
     end_rep_markers = torch.where(torch.diff(y) < 0)[0]
     y = torch.zeros_like(y)
     starts = (end_rep_markers - t).clamp(0)
     ends = (end_rep_markers + t).clamp(0, y.shape[0])
     for start,end in zip(starts, ends):
         y[start: end] = 1
+    
+    # when using segment_y for entire session: make last t values 1 - this is the end of the last rep
+    if label_end:
+        y[-t:] = 1
     return y
 class IMUDataset(Dataset):
     def __init__(self, df, winsize=250, stride=50, transform=None, aug=False):
@@ -74,9 +77,14 @@ class IMUDataset(Dataset):
         self.stride = stride
         self.len = (self.X.shape[1] - winsize) // stride + 1
         self.aug = aug
+
+        # for segmentation
+        self.y = segment_y(self.y, label_end=True)
     def __len__(self):
         return self.len
     def __getitem__(self, i):
+        if i >= self.len:
+            raise IndexError
         start = i * self.stride
         end = start + self.winsize
         y = self.y[start:end]#.mean()
@@ -88,7 +96,7 @@ class IMUDataset(Dataset):
         # y = torch.Tensor([1.0 if y.mean() < 1.5 else 0.0])
 
         # FOR SEGMENTATION: if y changes during window, y = 1 at that point. everywhere else is 0 (<winsize> values)
-        y = segment_y(y)
+        # y = segment_y(y)
 
         # FOR SEGMENTATION REGRESSION: y = time when y changes (single value)
         # diff = torch.diff(y)
@@ -101,10 +109,9 @@ class IMUDataset(Dataset):
             X = scale(X)
         return X, y
     
-
 HZ = 100
 in_channels = 6
-df = pd.read_csv('data/data-strom.csv')
+df = pd.read_csv('../data/data.csv')
 session_ids = df['session_id'].unique()
 print(len(session_ids))
 train_ids, val_ids = train_test_split(session_ids, test_size=0.2, random_state=42)
@@ -131,7 +138,6 @@ train_dataset = ConcatDataset([IMUDataset(df[df['session_id'] == session_id], wi
 val_dataset = ConcatDataset([IMUDataset(df[df['session_id'] == session_id], winsize, stride, transform, aug=False) for session_id in val_ids])
 
 len(train_dataset), len(val_dataset)
-
 class ResBlock(nn.Module):
     # One layer of convolutional block with batchnorm, relu and dropout
     def __init__(
@@ -248,8 +254,9 @@ def iou_metric(ypred, y_true):
     return iou.mean()
 
 class SegmentationLoss(nn.Module):
-    def __init__(self, alpha):
+    def __init__(self, alpha, pos_weight, device):
         super().__init__()
+        # self.cat_criterion = nn.BCEWithLogitsLoss(pos_weight=torch.Tensor([pos_weight])).to(device)
         self.cat_criterion = nn.BCEWithLogitsLoss()
         self.reg_criterion = nn.MSELoss()
         # self.iou_criterion = iou_metric
@@ -258,6 +265,7 @@ class SegmentationLoss(nn.Module):
         probs = F.sigmoid(ypred)
         cat_loss = self.cat_criterion(ypred, y_true)
         reg_loss = self.reg_criterion(probs, y_true)
+
         return self.alpha*cat_loss + (1-self.alpha)*reg_loss
 
 def objective(trial):
@@ -265,24 +273,6 @@ def objective(trial):
     writer = SummaryWriter(outdir)
 
     n_stages = trial.suggest_int("n_stages", 3, 6)
-
-    # stem_out_c = 2**trial.suggest_int("stem_out_c", 6, 10)
-    # min_channel_width = stem_out_c
-    # width = []
-    # for i in range(n_stages -1):
-    #     while True:
-    #         widthi = trial.suggest_int(f"width_{i}", 6, 10)
-    #         print(n_stages, i, min_channel_width, widthi)
-    #         if widthi >= min_channel_width:
-    #             width.append(2**widthi)
-    #             min_channel_width = widthi
-    #             break
-    # while True:
-    #     print(n_stages, min_channel_width, widthi)
-    #     widthi = trial.suggest_int(f"width_last", 6, 10)
-    #     if widthi >= min_channel_width:
-    #         width.append(2**widthi)
-    #         break
 
     config = dict(
         stem_out_c = 2**trial.suggest_int("stem_out_c", 6, 10),
