@@ -76,8 +76,24 @@ class IMUDataset(Dataset):
         self.full_winsize = full_winsize
         self.n_LSTM_windows = n_LSTM_windows
         self.LSTM_stride = LSTM_stride
-        self.len = (self.X.shape[1] - full_winsize) // stride + 1
         self.aug = aug
+
+
+        self.len = (self.X.shape[1] - full_winsize) // stride + 1
+
+        # pad to get at least one window
+        if self.len <= 0:
+            pad = full_winsize - self.X.shape[1]
+            self.X = torch.cat([self.X, torch.zeros(self.X.shape[0], pad)], dim=1)
+            self.y = torch.cat([self.y, torch.zeros(pad)])
+
+        # pad by winsize // 2 to get more windows
+        pad = (winsize // 2) * stride
+        self.X = torch.cat([self.X, torch.zeros(self.X.shape[0], pad)], dim=1)
+        self.y = torch.cat([self.y, torch.zeros(pad)])
+        self.len = (self.X.shape[1] - full_winsize) // stride + 1
+
+
     def __len__(self):
         return self.len
     def __getitem__(self, i):
@@ -113,6 +129,7 @@ class IMUDataset(Dataset):
         # y = torch.diff(y).argmin().unsqueeze(0) / self.winsize if diff.min() < 0 else torch.Tensor([-1])
         
         return X, y
+    
 HZ = 100
 in_channels = 6
 df = pd.read_csv('data/data.csv')
@@ -132,7 +149,7 @@ df[['gyr_x', 'gyr_y', 'gyr_z']] = (df[['gyr_x', 'gyr_y', 'gyr_z']] / 250.0).clip
 winsize = 256
 stride = 2
 
-n_LSTM_windows = 16
+n_LSTM_windows = 32
 LSTM_stride = 64
 print(winsize, stride)
 
@@ -405,9 +422,10 @@ class LSTMNet(nn.Module):
         return optimizer
 
 class Loss(nn.Module):
-    def __init__(self, device):
+    def __init__(self, device, pos_weight):
         super().__init__()
-        self.loss = nn.BCEWithLogitsLoss(pos_weight=torch.Tensor([20]).to(device))
+        self.loss = nn.BCEWithLogitsLoss(pos_weight=torch.Tensor([pos_weight]).to(device))
+        # self.loss = nn.BCEWithLogitsLoss()
         # self.loss = nn.MSELoss()
     def forward(self, y_pred, y_true):
         return self.loss(y_pred, y_true)
@@ -421,7 +439,7 @@ def objective(trial):
     weights = torch.load('logs/search256-3/56/best_model.pth')
 
     lstm_config = {
-        'num_layers': trial.suggest_int('num_layers', 1, 8),
+        'num_layers': trial.suggest_int('num_layers', 2, 5),
         # 'encoder_proj_channels': 2**trial.suggest_int('encoder_proj_channels', 5, 10),
         'skip_channels': 2**trial.suggest_int('skip_channels', 5, 10),
         'hidden_size': 2**trial.suggest_int('hidden_size', 5, 10),
@@ -431,7 +449,10 @@ def objective(trial):
         'num_windows': n_LSTM_windows,
         'learning_rate': trial.suggest_float('learning_rate', 1e-5, 1e-2, log=True),
         'weight_decay': trial.suggest_float('weight_decay', 1e-5, 1e-2, log=True),
+        'pos_weight': trial.suggest_float('pos_weight', 1.0, 10.0),
     }
+    if lstm_config['num_layers'] == 1:
+        lstm_config['dropout'] = 0.0
 
     config['lstm_config'] = lstm_config
 
@@ -444,16 +465,16 @@ def objective(trial):
     model.encoder.load_state_dict(weights)
     model.encoder.freeze()
 
-    criterion = Loss(device)#nn.BCEWithLogitsLoss()
+    criterion = Loss(device, pos_weight=lstm_config['pos_weight'])#nn.BCEWithLogitsLoss()
     optimizer = model.get_optimizer(lr=config['learning_rate'], weight_decay=config['weight_decay'])
 
-    print(f'Trial: {trial.number} - {sum(p.numel() for p in model.parameters() if p.requires_grad)} parameters - num_layers: {lstm_config["num_layers"]} - skip_channels: {lstm_config["skip_channels"]} - hidden_size: {lstm_config["hidden_size"]}')
+    print(f'Trial: {trial.number} - {sum(p.numel() for p in model.parameters() if p.requires_grad)} parameters - num_layers: {lstm_config["num_layers"]} - skip_channels: {lstm_config["skip_channels"]} - hidden_size: {lstm_config["hidden_size"]} - pos_weight: {lstm_config["pos_weight"]}')
 
     best_f1_epoch = 0
     best_val_loss = np.inf
     best_val_f1 = 0
 
-    patience = 10
+    patience = 5
     early_stop = 0
     min_delta = 0.001
 
