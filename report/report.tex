@@ -8,6 +8,7 @@
 \usepackage{xcolor}
 \usepackage{multirow}
 \usepackage{cuted}
+\graphicspath{ {./images/} }
 
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
@@ -59,10 +60,21 @@ What we did new
 \section{Materials and Methods}
 \subsection{Data Collection}
 \subsubsection{Participants}
+Participants consisted of this work's authors and volunteers at three different gyms. There were (todo) male participants and (todo) female participants, and they varied in weight, height, and resistance training experience.
+
 \subsubsection{Equipment}
-data collection tool (Wearable sensors)
+Participant preacher curls were recorded using an Adafruit MPU-6050 inertial measurement unit (IMU) on three accelerometer axes and three gyroscope axes. The IMU was connected to a Raspberry Pi 5. The Raspberry Pi was connected to and accessed by a laptop. Three different preacher curl machines at the three locations were used: (todo).
+
+\begin{figure}[h]
+\caption{Data collection device (todo: remove sEMG)}
+\centering
+\includegraphics{device}
+\end{figure}
+
 \subsubsection{Procedure}
-instructions, data annotation
+For each participant, the IMU was taped to their left wrist. Each participant was instructed to perform sets of preacher curls with consistent form and in each set reach muscular failure. Participants were allowed to select the weight they used and how many sets they performed. Consequently, participants varied in the weight they lifted, how many repetitions they performed in each set, and how many sets they volunteered. Participants also varied in their form and range of motion (e.g. locking out their arms at the bottom of the curl, duration of pause at the bottom, height of the concentric phase). Only sets taken to failure with visually consistent form were admitted to this work's dataset.
+
+A Python script on the Raspberry Pi facilitated data collection. The script broadcast an interactive data collection web application for access via laptop. This data collection dashboard was used to start recording a set's IMU data, manually record timestamp markers to annotate the end of each repetition, and end recording.
 
 \subsection{Data Processing}
 data cleaning, windowing, splitting, augmentation
