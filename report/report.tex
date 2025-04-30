@@ -1,12 +1,14 @@
 \documentclass[conference]{IEEEtran}
 \IEEEoverridecommandlockouts
-% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
 \usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{algorithmic}
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
+\usepackage{multirow}
+\usepackage{cuted}
+
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
@@ -42,10 +44,6 @@ snoblitt@email.sc.edu}
     abstract
 \end{abstract}
 
-\begin{IEEEkeywords}
-component, formatting, style, styling, insert
-\end{IEEEkeywords}
-
 \section{Introduction}
 
 \subsection{Background}
@@ -61,7 +59,7 @@ What we did new
 \section{Materials and Methods}
 \subsection{Data Collection}
 \subsubsection{Participants}
-Participants consisted of this work's authors and volunteers at three different gyms. There were (todo) male participants and (todo) female participants, and they varied in weight, height, and resistance training experience.
+Participants consisted of this work's authors and volunteers at three different gyms. There were nine male participants and three female participants, and they varied in weight, height, and resistance training experience.
 
 \subsubsection{Equipment}
 Participant preacher curls were recorded using an Adafruit MPU-6050 inertial measurement unit (IMU) on three accelerometer axes and three gyroscope axes. The IMU was connected to a Raspberry Pi 5. The Raspberry Pi was connected to and accessed by a laptop. Three different preacher curl machines at the three locations were used: (todo).
@@ -69,7 +67,7 @@ Participant preacher curls were recorded using an Adafruit MPU-6050 inertial mea
 \begin{figure}[h]
 \caption{Data collection device (todo: remove sEMG)}
 \centering
-\includegraphics{images/device}
+\includegraphics{device}
 \end{figure}
 
 \subsubsection{Procedure}
@@ -85,7 +83,6 @@ data cleaning, windowing, splitting, augmentation
 \subsection{Classification Model Design}
 
 \subsection{Model Training}
-\cite{he_2016}
 
 \subsection{Model Evaluation}
 
@@ -103,9 +100,6 @@ Put any figures and tables here
 \section{Discussion}
 
 
-\section*{References}
-
-\bibliographystyle{IEEEtran}
-\bibliography{references}
+\section{References}
 
 \end{document}
