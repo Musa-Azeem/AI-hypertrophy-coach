@@ -39,6 +39,8 @@ snoblitt@email.sc.edu}
 }
 
 \maketitle
+\thispagestyle{plain}
+\pagestyle{plain}
 
 \begin{abstract}
     abstract
@@ -126,7 +128,7 @@ Splitting data at the set level guarantees that no overlap exists between the da
 To simulate additional data, the training data was augmented with several techniques. First, training samples were randomly stretched and cropped in the time dimension by a factor of 1 to 1.5, simulating faster reps. Next, the amplitude of the training windows were randomdly scaled by a factor of 0.6 to 1.4, simulating more or less forceful reps. Agumentations were randomly applied to the training windows on every retrieval.
 
 \subsection{Segmentation Model Design}
-As a first step toward achieving the goals of this work, a segmentation model was designed to detect the end of each rep. This model was designed to take in a window of 6-channel IMU data and output a binary classification of whether each input data point is the end of a rep. To train the model, each window was given 256 labels (one per data point) based on the end-rep-markers. The area (80ms) around any end-rep-markers occuring within a window was labelled with a positive label. The remaining data points of each window were labelled with negative labels. An example of the labelling for a single window is shown in Figure \ref{fig:seg_labels}. 
+As a first step toward achieving the goals of this work, a segmentation model was designed to detect the end of each rep in a set of bicep curls. This model was designed to take in a window of 6-channel IMU data and output a binary classification of whether each input data point is the end of a rep. To train the model, each window was given 256 labels (one per data point) based on the end-rep-markers. The area (80ms) around any end-rep-markers occuring within a window was labelled with a positive label. The remaining data points of each window were given negative labels. An example of the labelling for a single window is shown in Figure \ref{fig:seg_labels}. 
 
 \begin{figure}[h]
     \centering
@@ -135,22 +137,34 @@ As a first step toward achieving the goals of this work, a segmentation model wa
     \label{fig:seg_labels}
 \end{figure}
 
-\subsection{Classification Model Design}
-The next step in this work was to design a classification model to predict near-failure reps. This model was designed to classify a window of IMU data as either a near-failure rep (RiR $\le$ 2) or not. The model was trained on the same data as the segmentation model, but with a different set of labels. Each window was labelled with a binary label indicating whether the entire window was a near-failure rep or not. Windows with over 50\% of their data points in a region of RiR $\le$ 2 (for instance, the region corrosponding to the last three reps in Figure \ref{fig:full_set}) were given a positive label. The remaining windows were labelled with a negative label.
+\subsection{Near-Failure Classification Model Design}
+The next step in this work was to design a classification model to predict near-failure reps. This model was designed to classify a window of IMU data as either a near-failure rep (RiR $\le$ 2) or not. The model was trained on the same data as the segmentation model, but with a different set of labels. Each window was given a binary label indicating whether the entire window was a near-failure rep or not. Windows with over 50\% of their data points in a region of RiR $\le$ 2 (for instance, the region corrosponding to the last three reps in Figure \ref{fig:full_set}) were given a positive label. The remaining windows were given a negative label.
 
 \subsection{Model Architectures}
 \subsubsection{Segmentation Model}
-The foundation of the segmentation model is a 1D convolutional residual neural network (ResNet) \cite{he_2016}. The model consists of several strided 1D convolutional layers, each followed by a batch normalization layer and a ReLU activation function. Residual connections are included around each convolutional layer. Convolutional layers with a kernel size of 1 are project residual connection channels when necessary. A final global average pooling and linear classification layer produce 256 output confidences, one for each data point in the input window. The final model architecture, found by neural architecture search (NAS) as explored in the next section, consists of 2,971,648 parameters and is shown in Figure \ref{fig:seg_arch} \cite{zoph_2016}.
+The foundation of the segmentation model is a 1D convolutional residual neural network (ResNet) \cite{he_2016}. The model consists of several strided 1D convolutional layers, each followed by a batch normalization layer and a ReLU activation function. Residual connections are included around each convolutional layer, with projection layers included as necessary, as in \cite{he_2016}. A final global average pooling and linear classification layer produce 256 output confidences, one for each data point in the input window. The final model architecture---found by neural architecture search (NAS) \cite{zoph_2016} as explored in the next section---consists of 2,971,648 parameters and is shown in Figure \ref{fig:seg_arch}.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.8\linewidth]{images/seg_arch}
+    \includegraphics[width=1\linewidth]{images/seg_arch}
     \caption{\textbf{Segmentation model architecture.} Each block in the ResNet Base consists of a 1D Convolution layer with a kernel size of 3, followed by a batch normalization layer and a ReLU activation function. Residual connections are included around each block. Labels on each block represent the output channels and stride of each layer.}
     \label{fig:seg_arch}
 \end{figure}
 
-\subsubsection{Classification Model}
-The base of the classification is the same ResNet base of the segmentation model. By loading the weights of the previous model, previously determined high dimensional representations of the IMU data can be used for further learning. This model also consists of an LSTM component
+\subsubsection{Near-Failure Classification Model}
+The near-failure classification model integrates the trained ResNet base and classification head of the segmentation model in its architecture. The weights of the trained segmentation model are loaded and frozen (not updated during training). The model is then integrated as follows:
+\begin{itemize}
+    \item ResNet Base: serves as a feature extractor, providing a high-dimensional representations of the input data. The output encodings of the ResNet base after global average pooling (vector of 512 values) are used in the next stage of the classification model.
+    \item Segmentation Outputs: The output predictions of the segmentation model are also used in the classification model. The segmentation model predicts any end-of-rep occurances within a window. After smoothing and finding the midpoints of positive prediction regions, the resulting end-of-rep marker predictions are used to calculate the time spent in each rep that occurs in a window. A vector of 256 values is generated, with each value representing the time spent in the rep occurring at that data point. This vector is referred to as ``time-in-rep'', and is also used in the next stage of the classification model.
+\end{itemize}
+
+The trainable portion of this model consists of a single convolution layer, a linear projection layer, a one-directional LSTM component, and a classification head. This model includes a temporal component, and accepts $T$=1 to 32 concurrent windows of data (with a stride of 64) as input, making a prediction for each timestep. All layers besides the LSTM component operate on these multiple input windows in parallel with no communication between them (as if there were a second batch dimension). The hyperparameters of these components were found through NAS once again. The model is structured as follows:
+\begin{itemize} 
+    \item Single Convolution Layer: provides a direct path from the input signals to the projection layer, allowing the model to optionally bypass the ResNet Base. In the final model architecture, this layer has a kernel size of 3, 64 output channels, and a stride of 1.
+    \item Linear Projection Layer: consolidates the outputs of the ResNet Base (512), the time-in-rep vector (256), and the outputs of the single convolution layer after global average pooling (64). This layer has 512+256+64=832 input channels and output channels equal to the hidden size of the LSTM layers.
+    \item LSTM Component: operates over multiple windows of data, allowing the model to learn temporal dependencies. The LSTM is one-directional, meaning it only processes the input data in one direction (past to future). Given an input of $T$ windows, the LSTM component outputs $T$ hidden states, representing the encodings of each input window to be used for classification. In the final architecture, the LSTM component has a hidden size of 256 and consists of 4 layers.
+    \item Classification Head: linear layer with 256 input features and 1 output. This layer takes the final hidden states of the LSTM component for each window and produces a prediction confidence for each.
+\end{itemize}
 
 \begin{figure}[h]
     \centering
@@ -160,10 +174,60 @@ The base of the classification is the same ResNet base of the segmentation model
 \end{figure}
 
 \subsection{Neural Architecture Search}
+Neural architecture search (NAS) was used to find the optimal hyperparameters of the segmentation and classification models. NAS was implemented using the Optuna library \cite{akiba_2019}. Each optimization ran for 100 trials and was configured to maximuze the F1 score of the model. In the initial optimization of the segmentation model, the following hyperparameters were searched:
+\begin{itemize}
+    \item Number of ResNet Block Stages: 4 to 8
+        \begin{itemize}
+            \item A ResNet Block Stage is a set of convolutional layers with the same number of output channels. The first layer in each stage has a stride of 2.
+        \end{itemize}
+    \item Number of ResNet Blocks per stage: 1 or 2
+    \item Number of output channels of first and last stages: 64 to 256 and 128 to 512, respectively
+        \begin{itemize}
+            \item The number of output channels of each intermediate stages is log-linearly interpolated between the first and last stages.
+        \end{itemize}
+    \item Kernel size of first convolutional layer: 3, 5, or 7
+    \item Learning Rate: 1e-5 to 1e-3
+    \item Optimizer Weight Decay: 1e-5 to 1e-3
+    \item Dropout Rate after each block: 0.1 to 0.2
+\end{itemize}
+
+Based on the initial search results, a second search was performed on a narrower search space. For the second run, the number of stages was set to 6, the kernel size was set to 7, and the learning rate and weight decay were constrained to [1e-3,5e-3] and [1e-4,5e-3], respectively.
+
+Next, the following hyperparameters were searched once for the classification model:
+\begin{itemize}
+    \item Number of output channels of the single convolution layer: 32 to 512
+    \item Number of LSTM Layers: 2 to 5
+    \item Hidden Size of LSTM: 32 to 512
+    \item Learning Rate: 1e-5 to 1e-3
+    \item Optimizer Weight Decay: 1e-5 to 1e-3
+    \item LSTM Dropout Rate: 0.0 to 0.2
+\end{itemize}
+
+During optimization, all models were trained until the validation f1 score showed no improvement for 15 epochs. The models from trials with the highest validation f1 scores were selected as the best models for each task. In the case of trials with similar performances, models with lower parameter counts were selected.
 
 \subsection{Model Training}
+Models were trained using the AdamW optimizer with learning rates of 4.3e-3 (segmentation model) and 7.9e-4 (classification model). The segmentation model was optimized with a combination of Binary Cross Entropy and Mean Squared Error loss, as shown in Equation \ref{eq:seg_loss}, where $\alpha=0.8$. The classification model was optimized with Binary Cross Entropy loss. The models were trained for 50 epochs or until validation f1 score stopped improving (resulting in 35 epochs for the segmentation model and 4 for the classification model). Both models were trained with a batch size of 128 on a single NVIDIA RTX 4090 GPU using the Pytorch library \cite{paszke_2019}. 
+
+\begin{equation}
+    \text{Loss} = \frac{1}{N} \sum_{i=1}^{N} \left( \alpha\cdot\text{BCE}(y_i, \hat y_i) + (1-\alpha)\frac{1}{256} \sum_{j=1}^{256} (\hat y_{ij} - y_{ij})^2 \right)
+    \label{eq:seg_loss}
+\end{equation}
+
+The segmentation model was trained on batches of individual windows of data from the train dataset. The classification model, on the other hand, was trained on batches of multiple windows of data. Each element of a batch was a set of $T=32$ concurrent windows, with a stride of 64. The total length of these sequences, accounting for overlap, is 2240 data points (22.4 seconds). For each sequence, the model was trained to predict the class of each window in the sequence using an LSTM with information flowing only from past windows to the future. In this way, the model was trained to make predictions using 1 up to 32 windows of data. It was also validated in this way, ensuring the model's performance was not reliant on having all 32 windows available at once. This is important for real-time inference, as the model must be able to make predictions on each window as it arrives.
 
 \subsection{Model Evaluation}
+During training, models were validated using the F1 score and loss on the validation dataset windowed with a stride of 2. This ensured results between train and validation datasets were comparable. For the final evaluation, the same sessions that make up the validation set were used to evaluate the models. However, here, each session was windowed with a stride of 64 data points (640 ms), simulating real-time inference (after waiting 2.56 seconds to collect the first window of data, one prediction is made every 640 ms). 
+
+In the case of the segmentation model, the model made predictions on each window independently, and the overlapping predictions were averaged to produce a single prediction for each data point in a session. The final predictions over each whole session were evaluated against the true segmentation labels to calculate the per-session F1 score. The final F1 score was calculated as the average of the per-session F1 scores.
+
+In the case of the classification model, the model made predictions using up to 32 windows. As illustrated in Figure \ref{fig:real_time_inference}, at the beginning of each session the model waits for 2.56 seconds for the first window of data to be collected, simulating real-time inference. After that, the model makes a prediction every 640 ms, using the most recent 32 windows of data (or less if not enough windows are available). The model's predictions for the most recent window at each inference are saved. The final predictions of each session are evaluated against the true labels of each window to calculate the per-session F1 score, as before. The final F1 score is calculated as the average of the per-session F1 scores.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.7\linewidth]{images/real_time_inference}
+    \caption{\textbf{Real-time inference.} Windows of size $w = 256$ are collected with a stride of $s = 64$ data points. The most recent $T=32$ (or less if not available) windows of data are used to make a prediction. The model makes $T$ predictions, and the prediction for the most recent window is used for real-time inference.}
+    \label{fig:real_time_inference}
+\end{figure}
 
 \subsection{Edge Deployment}
 describe steps taken to deploy to edge

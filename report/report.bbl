@@ -83,4 +83,14 @@ K.~He, X.~Zhang, S.~Ren, and J.~Sun, ``Deep residual learning for image
 B.~Zoph and Q.~V. Le, ``Neural architecture search with reinforcement
   learning,'' \emph{arXiv preprint arXiv:1611.01578}, 2016.
 
+\bibitem{akiba_2019}
+T.~Akiba, S.~Sano, T.~Yanase, T.~Ohta, and M.~Koyama, ``Optuna: A
+  next-generation hyperparameter optimization framework,'' in \emph{Proceedings
+  of the 25th ACM SIGKDD international conference on knowledge discovery \&
+  data mining}, 2019, pp. 2623--2631.
+
+\bibitem{paszke_2019}
+A.~Paszke, ``Pytorch: An imperative style, high-performance deep learning
+  library,'' \emph{arXiv preprint arXiv:1912.01703}, 2019.
+
 \end{thebibliography}

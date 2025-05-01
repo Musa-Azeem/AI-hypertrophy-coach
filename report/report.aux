@@ -32,9 +32,25 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-C}}Segmentation Model Design}{4}{}\protected@file@percent }
 \@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces \textbf  {Segmentation labels.} A single window of 1024 data points. A larger window size is chosen here for demonstration purposes. Shown from top to bottom are the acceleration data, gyroscope data, and segmentation labels. The segmentation labels are binary, with 1 indicating the end of a rep.}}{4}{}\protected@file@percent }
 \newlabel{fig:seg_labels}{{4}{4}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-D}}Classification Model Design}{4}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-D}}Near-Failure Classification Model Design}{4}{}\protected@file@percent }
+\citation{he_2016}
 \citation{he_2016}
 \citation{zoph_2016}
+\citation{akiba_2019}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-E}}Model Architectures}{5}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {II-E}1}Segmentation Model}{5}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces \textbf  {Segmentation model architecture.} Each block in the ResNet Base consists of a 1D Convolution layer with a kernel size of 3, followed by a batch normalization layer and a ReLU activation function. Residual connections are included around each block. Labels on each block represent the output channels and stride of each layer.}}{5}{}\protected@file@percent }
+\newlabel{fig:seg_arch}{{5}{5}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {II-E}2}Near-Failure Classification Model}{5}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces \textbf  {Classification model architecture.} }}{5}{}\protected@file@percent }
+\newlabel{fig:class_arch}{{6}{5}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-F}}Neural Architecture Search}{5}{}\protected@file@percent }
+\citation{paszke_2019}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-G}}Model Training}{6}{}\protected@file@percent }
+\newlabel{eq:seg_loss}{{1}{6}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-H}}Model Evaluation}{6}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-I}}Edge Deployment}{6}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {III}Results}{6}{}\protected@file@percent }
 \bibstyle{IEEEtran}
 \bibdata{references}
 \bibcite{refalo2024similar}{1}
@@ -45,28 +61,20 @@
 \bibcite{elshafei2021towards}{6}
 \bibcite{velloso2013qualitative}{7}
 \bibcite{dang2023fatigue}{8}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-E}}Model Architectures}{5}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {II-E}1}Segmentation Model}{5}{}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces \textbf  {Segmentation model architecture.} Each block in the ResNet Base consists of a 1D Convolution layer with a kernel size of 3, followed by a batch normalization layer and a ReLU activation function. Residual connections are included around each block. Labels on each block represent the output channels and stride of each layer.}}{5}{}\protected@file@percent }
-\newlabel{fig:seg_arch}{{5}{5}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {II-E}2}Classification Model}{5}{}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces \textbf  {Classification model architecture.} }}{5}{}\protected@file@percent }
-\newlabel{fig:class_arch}{{6}{5}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-F}}Neural Architecture Search}{5}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-G}}Model Training}{5}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-H}}Model Evaluation}{5}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-I}}Edge Deployment}{5}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {III}Results}{5}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Segmentation Model Performance}{5}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Classification Model Performance}{5}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}Edge Deployment Performance}{5}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {IV}Discussion}{5}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {V}Author Contributions}{5}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}Musa Azeem}{5}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-B}}Grant King}{5}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-C}}Savannah Noblitt}{5}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{References}{5}{}\protected@file@percent }
 \bibcite{preacher_curl}{9}
 \bibcite{he_2016}{10}
 \bibcite{zoph_2016}{11}
-\gdef \@abspage@last{6}
+\bibcite{akiba_2019}{12}
+\bibcite{paszke_2019}{13}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces \textbf  {Real-time inference.} Windows of size $w = 256$ are collected with a stride of $s = 64$ data points. The most recent $T=32$ (or less if not available) windows of data are used to make a prediction. The model makes $T$ predictions, and the prediction for the most recent window is used for real-time inference.}}{7}{}\protected@file@percent }
+\newlabel{fig:real_time_inference}{{7}{7}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Segmentation Model Performance}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Classification Model Performance}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}Edge Deployment Performance}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {IV}Discussion}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {V}Author Contributions}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}Musa Azeem}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-B}}Grant King}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-C}}Savannah Noblitt}{7}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{References}{7}{}\protected@file@percent }
+\gdef \@abspage@last{7}
