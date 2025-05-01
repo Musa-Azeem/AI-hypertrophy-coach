@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2025.4.30)  30 APR 2025 19:43
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (TeX Live 2022/dev/Debian) (preloaded format=pdflatex 2025.4.30)  30 APR 2025 21:47
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -245,43 +245,71 @@ Package xcolor Info: Model `HSB' substituted by `hsb' on input line 1373.
 Package xcolor Info: Model `Gray' substituted by `gray' on input line 1374.
 Package xcolor Info: Model `wave' substituted by `hsb' on input line 1375.
 )
+(/usr/share/texlive/texmf-dist/tex/latex/multirow/multirow.sty
+Package: multirow 2021/03/15 v2.8 Span multiple rows of a table
+\multirow@colwidth=\skip55
+\multirow@cntb=\count282
+\multirow@dima=\skip56
+\bigstrutjot=\dimen173
+)
+(/usr/share/texlive/texmf-dist/tex/latex/sttools/cuted.sty
+Package: cuted 2021/10/04 v2.0 Mixing onecolumn and twocolumn modes
+\At@ViperColsBreak=\toks23
+\preCutedStrip=\toks24
+\postCutedStrip=\toks25
+\cuted@@tempbox@a=\box54
+\cuted@@tempbox@c=\box55
+\cuted@@tempbox@var=\box56
+\hold@viper=\box57
+\@viper=\box58
+\cuted@@varbox@a=\box59
+\cuted@@varbox@c=\box60
+\cuted@@tempdim@spread=\dimen174
+\cuted@@tempdim@a=\dimen175
+\cuted@@tempdim@b=\dimen176
+\ht@hold@viper=\dimen177
+\ht@viper=\dimen178
+\var@@pagediscards@ht=\dimen179
+\stripsep=\skip57
+\viper@penalty=\count283
+)
 (/usr/share/texlive/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2022-01-12 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count282
-\l__pdf_internal_box=\box54
+\l__color_backend_stack_int=\count284
+\l__pdf_internal_box=\box61
 )
 (./report.aux)
 \openout1 = `report.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 12.
-LaTeX Font Info:    ... okay on input line 12.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 12.
-LaTeX Font Info:    ... okay on input line 12.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 12.
-LaTeX Font Info:    ... okay on input line 12.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 12.
-LaTeX Font Info:    ... okay on input line 12.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 12.
-LaTeX Font Info:    ... okay on input line 12.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 12.
-LaTeX Font Info:    ... okay on input line 12.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 12.
-LaTeX Font Info:    ... okay on input line 12.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 14.
+LaTeX Font Info:    ... okay on input line 14.
 
 -- Lines per column: 56 (exact).
 (/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count283
-\scratchdimen=\dimen173
-\scratchbox=\box55
-\nofMPsegments=\count284
-\nofMParguments=\count285
-\everyMPshowfont=\toks23
-\MPscratchCnt=\count286
-\MPscratchDim=\dimen174
-\MPnumerator=\count287
-\makeMPintoPDFobject=\count288
-\everyMPtoPDFconversion=\toks24
+\scratchcounter=\count285
+\scratchdimen=\dimen180
+\scratchbox=\box62
+\nofMPsegments=\count286
+\nofMParguments=\count287
+\everyMPshowfont=\toks26
+\MPscratchCnt=\count288
+\MPscratchDim=\dimen181
+\MPnumerator=\count289
+\makeMPintoPDFobject=\count290
+\everyMPtoPDFconversion=\toks27
 ) (/usr/share/texlive/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
@@ -291,14 +319,14 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
-LaTeX Font Info:    Calculating math sizes for size <11> on input line 39.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 39.
+LaTeX Font Info:    Calculating math sizes for size <11> on input line 41.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 41.
 
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 39.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 41.
 
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
@@ -307,7 +335,7 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 <images/device.jpg, id=1, 1311.90125pt x 1284.8pt>
 File: images/device.jpg Graphic file (type jpg)
 <use images/device.jpg>
-Package pdftex.def Info: images/device.jpg  used on input line 71.
+Package pdftex.def Info: images/device.jpg  used on input line 69.
 (pdftex.def)             Requested size: 151.20154pt x 148.07236pt.
 
 
@@ -320,12 +348,57 @@ und PDF version <1.7>, but at most version <1.5> allowed
 <images/imu_orientation.pdf, id=2, 453.695pt x 367.3725pt>
 File: images/imu_orientation.pdf Graphic file (type pdf)
 <use images/imu_orientation.pdf>
-Package pdftex.def Info: images/imu_orientation.pdf  used on input line 81.
+Package pdftex.def Info: images/imu_orientation.pdf  used on input line 79.
 (pdftex.def)             Requested size: 151.20154pt x 122.43289pt.
+<images/full_set.pdf, id=3, 1084.05pt x 505.89pt>
+File: images/full_set.pdf Graphic file (type pdf)
+<use images/full_set.pdf>
+Package pdftex.def Info: images/full_set.pdf  used on input line 86.
+(pdftex.def)             Requested size: 464.39685pt x 216.71793pt.
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
 [1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}
 
 
- <./images/device.jpg> <./images/imu_orientation.pdf>] (./report.bbl)
+ <./images/device.jpg> <./images/imu_orientation.pdf>]
+<images/seg_1024_window.pdf, id=37, 722.7pt x 505.89pt>
+File: images/seg_1024_window.pdf Graphic file (type pdf)
+<use images/seg_1024_window.pdf>
+Package pdftex.def Info: images/seg_1024_window.pdf  used on input line 114.
+(pdftex.def)             Requested size: 252.0pt x 176.40028pt.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+Underfull \vbox (badness 2922) has occurred while \output is active []
+
+ [2 <./images/full_set.pdf>]
+
+pdfTeX warning: pdflatex (file ./images/seg_arch.pdf): PDF inclusion: found PDF
+ version <1.7>, but at most version <1.5> allowed
+<images/seg_arch.pdf, id=93, 306.14375pt x 191.71625pt>
+File: images/seg_arch.pdf Graphic file (type pdf)
+<use images/seg_arch.pdf>
+Package pdftex.def Info: images/seg_arch.pdf  used on input line 128.
+(pdftex.def)             Requested size: 201.60077pt x 126.24641pt.
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+
+pdfTeX warning: pdflatex (file ./images/class_arch.pdf): PDF inclusion: found P
+DF version <1.7>, but at most version <1.5> allowed
+<images/class_arch.pdf, id=94, 336.25626pt x 215.80624pt>
+File: images/class_arch.pdf Graphic file (type pdf)
+<use images/class_arch.pdf>
+Package pdftex.def Info: images/class_arch.pdf  used on input line 138.
+(pdftex.def)             Requested size: 201.60077pt x 129.38594pt.
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+(./report.bbl)
 
 ** Conference Paper **
 Before submitting the final camera ready copy, remember to:
@@ -337,26 +410,26 @@ Before submitting the final camera ready copy, remember to:
  uses only Type 1 fonts and that every step in the generation
  process uses the appropriate paper size.
 
-[2
-
-] (./report.aux) ) 
+[3 <./images/seg_1024_window.pdf> <./images/seg_arch.pdf> <./images/class_arch.
+pdf>] (./report.aux) ) 
 Here is how much of TeX's memory you used:
- 4170 strings out of 478287
- 64904 string characters out of 5849289
- 367488 words of memory out of 5000000
- 22332 multiletter control sequences out of 15000+600000
- 506201 words of font info for 95 fonts, out of 8000000 for 9000
+ 4378 strings out of 478287
+ 69009 string characters out of 5849289
+ 370908 words of memory out of 5000000
+ 22528 multiletter control sequences out of 15000+600000
+ 507900 words of font info for 103 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  55i,11n,62p,850b,332s stack positions out of 5000i,500n,10000p,200000b,80000s
-{/usr/share/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc}</
-usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/texli
-ve/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/share/texlive/texmf-dist/
-fonts/type1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw
-/times/utmri8a.pfb>
-Output written on report.pdf (2 pages, 1838730 bytes).
+{/usr/share/texlive/texmf-dist/fonts/enc/dvips/base/8r.en
+c}</usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></us
+r/share/texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></usr/share/texlive
+/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/share/texlive/texmf-dist/fo
+nts/type1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/t
+imes/utmri8a.pfb>
+Output written on report.pdf (3 pages, 2196862 bytes).
 PDF statistics:
- 58 PDF objects out of 1000 (max. 8388607)
- 32 compressed objects within 1 object stream
+ 527 PDF objects out of 1000 (max. 8388607)
+ 228 compressed objects within 3 object streams
  0 named destinations out of 1000 (max. 500000)
- 11 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 31 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -33,4 +33,8 @@ K.~He, X.~Zhang, S.~Ren, and J.~Sun, ``Deep residual learning for image
   recognition,'' in \emph{Proceedings of the IEEE conference on computer vision
   and pattern recognition}, 2016, pp. 770--778.
 
+\bibitem{zoph_2016}
+B.~Zoph and Q.~V. Le, ``Neural architecture search with reinforcement
+  learning,'' \emph{arXiv preprint arXiv:1611.01578}, 2016.
+
 \end{thebibliography}

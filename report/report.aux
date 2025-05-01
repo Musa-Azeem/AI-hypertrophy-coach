@@ -14,21 +14,38 @@
 \newlabel{fig:data_collection_tool}{{1}{1}}
 \@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces \textbf  {IMU orientation.} The IMU was taped to the participant's wrist with the axes oriented as shown. Image source \cite  {preacher_curl}.}}{1}{}\protected@file@percent }
 \newlabel{fig:imu_orientation}{{2}{1}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces \textbf  {Full set of preacher curls.} The accelerometer (top) and gyroscope (bottom) data from a single set of preacher curls, with the end-of-rep annotations shown as red vertical lines. The set lasted 26.2 seconds and consisted of 8 repetitions to failure. Red numbers indicate the Repitions in Reserve at each point during the set. The last rep, at which point the participant could no longer lift the weight, is a rep taken to failure, with an RiR of 0.}}{2}{}\protected@file@percent }
+\newlabel{fig:full_set}{{3}{2}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-B}}Data Processing}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {II-B}1}Data Cleaning}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {II-B}2}Splitting \& Windowing}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {II-B}3}Data Augmentation}{2}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-C}}Segmentation Model Design}{2}{}\protected@file@percent }
 \citation{he_2016}
+\citation{zoph_2016}
 \bibstyle{IEEEtran}
 \bibdata{references}
 \bibcite{preacher_curl}{1}
 \bibcite{he_2016}{2}
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-B}}Data Processing}{2}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-C}}Segmentation Model Design}{2}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-D}}Classification Model Design}{2}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-E}}Model Training}{2}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-F}}Model Evaluation}{2}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-G}}Edge Deployment}{2}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {III}Results}{2}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Segmentation Model Performance}{2}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Classification Model Performance}{2}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}Edge Deployment Performance}{2}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {IV}Discussion}{2}{}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{References}{2}{}\protected@file@percent }
-\gdef \@abspage@last{2}
+\bibcite{zoph_2016}{3}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces \textbf  {Segmentation labels.} A single window of 1024 data points. A larger window size is chosen here for demonstration purposes. Shown from top to bottom are the acceleration data, gyroscope data, and segmentation labels. The segmentation labels are binary, with 1 indicating the end of a rep.}}{3}{}\protected@file@percent }
+\newlabel{fig:seg_labels}{{4}{3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-D}}Classification Model Design}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-E}}Model Architectures}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {II-E}1}Segmentation Model}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {\mbox  {II-E}2}Classification Model}{3}{}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces \textbf  {Segmentation model architecture.} Each block in the ResNet Base consists of a 1D Convolution layer with a kernel size of 3, followed by a batch normalization layer and a ReLU activation function. Residual connections are included around each block. Labels on each block represent the output channels and stride of each layer.}}{3}{}\protected@file@percent }
+\newlabel{fig:seg_arch}{{5}{3}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces \textbf  {Classification model architecture.} }}{3}{}\protected@file@percent }
+\newlabel{fig:class_arch}{{6}{3}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-F}}Neural Architecture Search}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-G}}Model Training}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-H}}Model Evaluation}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-I}}Edge Deployment}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {III}Results}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-A}}Segmentation Model Performance}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-B}}Classification Model Performance}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {III-C}}Edge Deployment Performance}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {IV}Discussion}{3}{}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{References}{3}{}\protected@file@percent }
+\gdef \@abspage@last{3}

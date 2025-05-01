@@ -53,7 +53,7 @@ Exercise science background
 Literature review
 
 \subsection{Contributions}
-What we did new
+What we did new - describe near-failure reps.
 
 
 \section{Materials and Methods}
@@ -81,7 +81,14 @@ During data collection, the IMU was taped to each participant's left wrist. The 
     \label{fig:imu_orientation}
 \end{figure}
 
-During data collection, annotations were recorded for future labelling. This was facilitated by a custom Python server running on the Raspberry Pi. When prompted to start recording, the server read and stored data from the IMU in CSV format at approximately 100 Hz. The server broadcasts an interactive data collection web application for access via laptop over wifi or ethernet. This data collection dashboard was used to enter participant metand location metadata, start the recording of IMU data, manually record timestamp markers to annotate the end of each repetition, and stop the recording. The timestamp markers were later used to generate data labels.
+\begin{figure*}[!h]
+    \centering
+    \includegraphics[width=0.9\textwidth]{images/full_set}
+    \caption{\textbf{Full set of preacher curls.} The accelerometer (top) and gyroscope (bottom) data from a single set of preacher curls, with the end-of-rep annotations shown as red vertical lines. The set lasted 26.2 seconds and consisted of 8 repetitions to failure. Red numbers indicate the Repitions in Reserve at each point during the set. The last rep, at which point the participant could no longer lift the weight, is a rep taken to failure, with an RiR of 0.}
+    \label{fig:full_set}
+\end{figure*}
+
+During data collection, annotations were recorded for future labelling. This was facilitated by a custom Python server running on the Raspberry Pi. When prompted to start recording, the server read and stored data from the IMU in CSV format at approximately 100 Hz. The server broadcasts an interactive data collection web application for access via laptop over Wifi or Ethernet. This data collection dashboard was used to enter participant metand location metadata, start the recording of IMU data, manually record timestamp markers to annotate the end of each repetition, and stop the recording. The timestamp markers were later used to generate data labels.
 
 In total, 13 participants performed 68 sets of preacher curls, with an length of 36 seconds and 9.3 curl repetitions. This resulted in 40 minutes of data consisting of 631 total reps.
 
@@ -89,16 +96,51 @@ In total, 13 participants performed 68 sets of preacher curls, with an length of
 Several steps were taken to process the raw IMU data and prepare it for model training. 
 
 \subsubsection{Data Cleaning}
-First, to resolve flunctuations in data sampling rate caused by the Raspberry Pi's CPU load, the 6-channel timeseries data was first interpolated to exactly 100 Hz. Next, the data was smoothed with a 15-data point (150 ms) moving average filter.
+First, to resolve flunctuations in data sampling rate caused by the Raspberry Pi's CPU load, the 6-channel timeseries data was first interpolated to exactly 100 Hz. Next, the data was smoothed with a 15-data point (150 ms) moving average filter to remove signal noise. The data annotations were adjusted as well. Manual inspection of the timeseries signals was used to adjust any incorrect end-of-rep annotations to the true end of the rep. A full set of curls after cleaning, along with the data annotations, can be seen in Figure \ref{fig:full_set}.
 
-\subsection{Windowing}
+\subsubsection{Splitting \& Windowing}
+To facilitate model training, the collected data was split into train and validation splits. About 80\% of the recorded preacher curl sets (53) were added to the train set. The remaining 20\% of sets (15) were added to the validation split. Next, the data in each split was windowed into 256 data-point (2.56s) segments, with a stride of 2 data points (20 ms). Each window was labelled based on the end-rep-marker annotations, as will be explored. In total, about 90k training windows and 26k validation windows were generated.
 
+Splitting data at the set level guarantees that no overlap exists between the data in the training and validation set, ensuring that the model is not trained on data it will be evaluated on. Windows of 2.56 seconds were chosen to balance the receptive field of the model with real time capabilities. Windows of 2.56 ensure models had the context needed to capture an entire rep, which are usually less than 2.56 seconds. At the same time, the 2.56 second windows are small enough to allow for real time inference on edge devices. A small stride was chosen to maximize the number of training samples available to the model. 
 
-data cleaning, windowing, splitting, augmentation
+\subsubsection{Data Augmentation}
+To simulate additional data, the training data was augmented with several techniques. First, training samples were randomly stretched and cropped in the time dimension by a factor of 1 to 1.5, simulating faster reps. Next, the amplitude of the training windows were randomdly scaled by a factor of 0.6 to 1.4, simulating more or less forceful reps. Agumentations were randomly applied to the training windows on every retrieval.
 
 \subsection{Segmentation Model Design}
+As a first step toward achieving the goals of this work, a segmentation model was designed to detect the end of each rep. This model was designed to take in a window of 6-channel IMU data and output a binary classification of whether each input data point is the end of a rep. To train the model, each window was given 256 labels (one per data point) based on the end-rep-markers. The area (80ms) around any end-rep-markers occuring within a window was labelled with a positive label. The remaining data points of each window were labelled with negative labels. An example of the labelling for a single window is shown in Figure \ref{fig:seg_labels}. 
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\linewidth]{images/seg_1024_window}
+    \caption{\textbf{Segmentation labels.} A single window of 1024 data points. A larger window size is chosen here for demonstration purposes. Shown from top to bottom are the acceleration data, gyroscope data, and segmentation labels. The segmentation labels are binary, with 1 indicating the end of a rep.}
+    \label{fig:seg_labels}
+\end{figure}
 
 \subsection{Classification Model Design}
+The next step in this work was to design a classification model to predict near-failure reps. This model was designed to classify a window of IMU data as either a near-failure rep (RiR $\le$ 2) or not. The model was trained on the same data as the segmentation model, but with a different set of labels. Each window was labelled with a binary label indicating whether the entire window was a near-failure rep or not. Windows with over 50\% of their data points in a region of RiR $\le$ 2 (for instance, the region corrosponding to the last three reps in Figure \ref{fig:full_set}) were given a positive label. The remaining windows were labelled with a negative label.
+
+\subsection{Model Architectures}
+\subsubsection{Segmentation Model}
+The foundation of the segmentation model is a 1D convolutional residual neural network (ResNet) \cite{he_2016}. The model consists of several strided 1D convolutional layers, each followed by a batch normalization layer and a ReLU activation function. Residual connections are included around each convolutional layer. Convolutional layers with a kernel size of 1 are project residual connection channels when necessary. A final global average pooling and linear classification layer produce 256 output confidences, one for each data point in the input window. The final model architecture, found by neural architecture search (NAS) as explored in the next section, consists of 2,971,648 parameters and is shown in Figure \ref{fig:seg_arch} \cite{zoph_2016}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{images/seg_arch}
+    \caption{\textbf{Segmentation model architecture.} Each block in the ResNet Base consists of a 1D Convolution layer with a kernel size of 3, followed by a batch normalization layer and a ReLU activation function. Residual connections are included around each block. Labels on each block represent the output channels and stride of each layer.}
+    \label{fig:seg_arch}
+\end{figure}
+
+\subsubsection{Classification Model}
+The base of the classification is the same ResNet base of the segmentation model. By loading the weights of the previous model, previously determined high dimensional representations of the IMU data can be used for further learning. This model also consists of an LSTM component
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\linewidth]{images/class_arch}
+    \caption{\textbf{Classification model architecture.} }
+    \label{fig:class_arch}
+\end{figure}
+
+\subsection{Neural Architecture Search}
 
 \subsection{Model Training}
 
@@ -118,6 +160,7 @@ Put any figures and tables here
 \section{Discussion}
 
 
-\section{References}
+\bibliographystyle{IEEEtran}
+\bibliography{references}
 
 \end{document}
