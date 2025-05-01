@@ -61,23 +61,41 @@ What we did new
 \section{Materials and Methods}
 \subsection{Data Collection}
 \subsubsection{Participants}
-Participants consisted of this work's authors and volunteers at three different gyms. There were (todo) male participants and (todo) female participants, and they varied in weight, height, and resistance training experience.
+Participants consisted of this work's authors and volunteers at three different gyms. There were 13 participants in total (9 male, 4 female). All participants were about 18-25 years old and varied in weight, height, strength, and resistance training experience.
 
 \subsubsection{Equipment}
-Participant preacher curls were recorded using an Adafruit MPU-6050 inertial measurement unit (IMU) on three accelerometer axes and three gyroscope axes. The IMU was connected to a Raspberry Pi 5. The Raspberry Pi was connected to and accessed by a laptop. Three different preacher curl machines at the three locations were used: (todo).
+Participant preacher curls were recorded using a custom-made recording device, consisting of a Raspberry Pi 5 and the Adafruit MPU-6050 6-axis inertial measurement unit (IMU), capturing both accelerometer and gyroscope data. Altough only IMU data was used here, the device, shown in Figure \ref{fig:data_collection_tool} was designed with the intention and capability of recording data from multiple sensors (such as heartbeat sensor and sEMG). The Raspberry Pi read data from the IMU at 100 Hz, and was connected to and accessed by a laptop. Three different preacher curl machines at the three locations were used for data collection: (TODO).
 
 \begin{figure}[h]
-\caption{Data collection device (todo: remove sEMG)}
-\centering
-\includegraphics{images/device}
+    \centering
+    \includegraphics[width=0.6\linewidth]{images/device}
+    \caption{\textbf{Data collection device.} The Raspberry Pi (bottom) reads, processes, and stores data from the IMU (top right). The sEMG sensor (bottom right) was not used due to hardware issues. During data collection, the Pi was powered by a portable battery pack. A box was used to protect the Raspberry Pi from damage, and the IMU was taped to participants' wrists.}
+    \label{fig:data_collection_tool}
 \end{figure}
 
 \subsubsection{Procedure}
-For each participant, the IMU was taped to their left wrist. Each participant was instructed to perform sets of preacher curls with consistent form and in each set reach muscular failure. Participants were allowed to select the weight they used and how many sets they performed. Consequently, participants varied in the weight they lifted, how many repetitions they performed in each set, and how many sets they volunteered. Participants also varied in their form and range of motion (e.g. locking out their arms at the bottom of the curl, duration of pause at the bottom, height of the concentric phase). Only sets taken to failure with visually consistent form were admitted to this work's dataset.
+During data collection, the IMU was taped to each participant's left wrist. The axes of the sensor were oriented as shown in Figure \ref{fig:imu_orientation}. Each participant was instructed to perform sets of preacher curls with consistent form, taking each set to momentary muscular failure. Participants were free to select the weight they lifted and decide how many sets they performed. Consequently, collected data varied in the amount of weight lifted, the number of repetitions per set, and how many sets were completed in a session. Participants also introduced natural variation in form and range of motion (e.g. locking out their arms at the bottom of the curl, duration of pause at the bottom, height of the concentric phase). Only sets taken to failure with proper form were admitted to this work's dataset.
 
-A Python script on the Raspberry Pi facilitated data collection. The script broadcast an interactive data collection web application for access via laptop. This data collection dashboard was used to start recording a set's IMU data, manually record timestamp markers to annotate the end of each repetition, and end recording.
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.6\linewidth]{images/imu_orientation}
+    \caption{\textbf{IMU orientation.} The IMU was taped to the participant's wrist with the axes oriented as shown. Image source \cite{preacher_curl}.}
+    \label{fig:imu_orientation}
+\end{figure}
+
+During data collection, annotations were recorded for future labelling. This was facilitated by a custom Python server running on the Raspberry Pi. When prompted to start recording, the server read and stored data from the IMU in CSV format at approximately 100 Hz. The server broadcasts an interactive data collection web application for access via laptop over wifi or ethernet. This data collection dashboard was used to enter participant metand location metadata, start the recording of IMU data, manually record timestamp markers to annotate the end of each repetition, and stop the recording. The timestamp markers were later used to generate data labels.
+
+In total, 13 participants performed 68 sets of preacher curls, with an length of 36 seconds and 9.3 curl repetitions. This resulted in 40 minutes of data consisting of 631 total reps.
 
 \subsection{Data Processing}
+Several steps were taken to process the raw IMU data and prepare it for model training. 
+
+\subsubsection{Data Cleaning}
+First, to resolve flunctuations in data sampling rate caused by the Raspberry Pi's CPU load, the 6-channel timeseries data was first interpolated to exactly 100 Hz. Next, the data was smoothed with a 15-data point (150 ms) moving average filter.
+
+\subsection{Windowing}
+
+
 data cleaning, windowing, splitting, augmentation
 
 \subsection{Segmentation Model Design}

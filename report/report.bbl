@@ -21,6 +21,13 @@
 \providecommand{\BIBdecl}{\relax}
 \BIBdecl
 
+\bibitem{preacher_curl}
+\BIBentryALTinterwordspacing
+K.~Kings, ``Best preacher curl alternatives,'' accessed April 30, 2025.
+  [Online]. Available:
+  \url{https://www.kettlebellkings.com/blogs/default-blog/best-preacher-curl-alternatives}
+\BIBentrySTDinterwordspacing
+
 \bibitem{he_2016}
 K.~He, X.~Zhang, S.~Ren, and J.~Sun, ``Deep residual learning for image
   recognition,'' in \emph{Proceedings of the IEEE conference on computer vision
