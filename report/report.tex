@@ -69,12 +69,12 @@ Dang et al. \cite{dang2023fatigue} investigated muscle fatigue classification du
 While prior research has addressed fatigue classification, perceived exertion estimation, and lifting quality, to our knowledge, no existing study has proposed a complete, sensor-driven pipeline for real-time prediction of repetitions in reserve. This remains an open area of research with substantial opportunity for further exploration and advancement.
 
 \subsection{Contributions}
-In this work we explore the novel task of predicting RiR in real time using wearable, easy-to-apply sensors. As a first step torward this goal, we present a novel neural network-based pipeline for detecting ``near-failure'' repetitions in real time using a wrist-mounted inertial measurement unit (IMU). Our contributions are as follows:
+In this work we explore the novel task of developing models of human activity in the gym and predicting RiR in real time using wearable, easy-to-apply sensors. As a first step torward this goal, we propose the development of neural network-based pipeline for segmenting bicep curl reps and detecting ``near-failure'' repetitions in real time using a wrist-mounted inertial measurement unit (IMU). Near-faluire reps refer to repetitions performed with two or fewer remaining repetitions in reserve (RiR $\leq$ 2). Such a model will allow for real-time feedback to be provided to users, helping them to optimize their training sessions and stop their sets with at most two reps in reserve. The contributions of this work are as follows:
 
 \begin{itemize}
     \item We introduce a new dataset of wrist IMU data collected during preacher curls performed to momentary muscular failure by 13 diverse participants. The dataset includes over 600 annotated repetitions with varied form, weight, and number of reps.
     \item We develop a segmentation model to detect the end of each repetition in real time.
-    \item We develop a classification model to identify near-failure repetitions, defined as repetitions performed with two or fewer remaining repetitions in reserve (RiR $\leq$ 2). 
+    \item We develop a classification model to identify near-failure repetitions, 
     \item We demonstrate that our models can be deployed on edge hardware using a Raspberry Pi 5, validating their potential for real-time, low-power operation in various gym settings.
 \end{itemize}
 
@@ -268,6 +268,20 @@ The segmentation and classification models were evaluated on the validation sess
 \subsection{Edge Deployment Performance}
 
 \section{Discussion}
+
+\subsection{Key Achievements and Implications}
+This study demonstrates that a single wrist-mounted IMU can effectively support real-time detection of resistance training repetitions and near-failure states. The segmentation model achieved robust rep segmentation (F1 = 0.83) using only 6-axis inertial data, eliminating the need for complementary sensors like ECG or force plates used in prior work \cite{albert2021using, jiang2021data}. This reduces hardware complexity and cost while maintaining accuracy---a critical advantage for practical adoption in gym environments. Furthermore, the classification model successfully identified near-failure repetitions (RiR $\le$ 2) with an F1 score of 0.82, providing actionable feedback to users without relying on subjective self-assessment.
+
+The segmentation model's real-time rep counting capability enables precise tracking of training volume, a cornerstone of hypertrophy programming \cite{refalo2024similar}. Integration of this model with applications, in a smart watch, for instance, could count reps for user convenience, circumventing the need for them to manually record their training. Our near-failure classifier offers a unique solution to the challenge of training intensity management. By alerting users when they are approaching failure, users are able to approach sufficient mechanical tension to stimulate growth, while preventing excessive fatigue that could impair recovery \cite{izquierdo2006differential}. 
+
+Deployment on a Raspberry Pi 5 (inference latency: 138 ms, model size: 20 MB) validates the system's suitability for low-power, portable applications. Unlike cloud-dependent solutions, edge processing ensures privacy-preserving operation in environments with limited connectivity, such as commercial gyms or home setups. The 640 ms update stride (1.56 Hz) and low model latency of 138 ms provides timely feedback without overwhelming users, striking a balance between responsiveness and computational efficiency. 
+
+\subsection{Limitations and Future Directions}
+While promising, the study has limitations. First, data collection focused solely on preacher curls. Future work should validate generalizability to compound movements (e.g., squats, bench presses) where fatigue manifests differently \cite{velloso2013qualitative}. Second, our models were trained on a limited number of participants (13), which may not capture the full spectrum of lifting styles and fatigue responses. Expanding the dataset to include diverse populations, such as older adults or individuals with disabilities, is essential for broader applicability. 
+
+Future work will involve a more diverse dataset, including additional exercises and participants, to enhance model generalizability. We also plan to explore the integration of additional sensors (e.g., sEMG) to improve performance and robustness. The goals of the models will also be advanced in future work. Ideally we aim to develop a model that can predict RiR in real time, providing users with immediate feedback on their training intensity. This is a much more challenging task than what we have achieved, and will require the development of more sophisticated models and data collection techniques.
+
+Finally, we aim to develop a user-friendly application that leverages our models to provide real-time feedback during workouts, enhancing the training experience and promoting safer lifting practices. Current models require only an IMU sensor, and could be easily integrated into a smart watch or other wearable device. This would allow for real-time feedback to be provided to users, helping them to optimize their training sessions and stop their sets with at most two reps in reserve.
 
 \section{Author Contributions}
 
