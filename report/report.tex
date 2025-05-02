@@ -7,6 +7,7 @@
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage{multirow}
+\usepackage{subcaption}
 \usepackage{cuted}
 
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
@@ -215,7 +216,7 @@ Models were trained using the AdamW optimizer with learning rates of 4.3e-3 (seg
 
 The segmentation model was trained on batches of individual windows of data from the train dataset. The classification model, on the other hand, was trained on batches of multiple windows of data. Each element of a batch was a set of $T=32$ concurrent windows, with a stride of 64. The total length of these sequences, accounting for overlap, is 2240 data points (22.4 seconds). For each sequence, the model was trained to predict the class of each window in the sequence using an LSTM with information flowing only from past windows to the future. In this way, the model was trained to make predictions using 1 up to 32 windows of data. It was also validated in this way, ensuring the model's performance was not reliant on having all 32 windows available at once. This is important for real-time inference, as the model must be able to make predictions on each window as it arrives.
 
-\subsection{Model Evaluation}
+\subsection{Model Evaluation}\label{sec:model_evaluation}
 During training, models were validated using the F1 score and loss on the validation dataset windowed with a stride of 2. This ensured results between train and validation datasets were comparable. For the final evaluation, the same sessions that make up the validation set were used to evaluate the models. However, here, each session was windowed with a stride of 64 data points (640 ms), simulating real-time inference (after waiting 2.56 seconds to collect the first window of data, one prediction is made every 640 ms). 
 
 In the case of the segmentation model, the model made predictions on each window independently, and the overlapping predictions were averaged to produce a single prediction for each data point in a session. The final predictions over each whole session were evaluated against the true segmentation labels to calculate the per-session F1 score. The final F1 score was calculated as the average of the per-session F1 scores.
@@ -233,10 +234,36 @@ In the case of the classification model, the model made predictions using up to 
 describe steps taken to deploy to edge
 
 \section{Results}
-Put any figures and tables here
-\subsection{Segmentation Model Performance}
+The segmentation and classification models were evaluated on the validation sessions, simulating real-time inference as described in Section \ref{sec:model_evaluation}. The segmentation model achieved an average F1 score of 0.83 and accuracy of 92.8\%. The classification model achieved an average F1 score of 0.82 and accuracy of 86.6\%. Table \ref{tab:eval} summarizes the average performances of the models over all the sessions, and the confusion matrices are shown in Figure \ref{fig:cms}.
 
-\subsection{Classification Model Performance}
+\begin{table}[]
+    \centering
+    \caption{\textbf{Model performance.} The average F1 score, precision, recall, and accuracy of the segmentation and classification models over each session in the validation dataset.}
+    
+    \renewcommand{\arraystretch}{1.5}
+    \begin{tabular}{c|c|c|}
+    \cline{2-3}
+                                    & Segmentation Model  & Classification Model  \\ \hline
+    \multicolumn{1}{|c|}{F1 Score}  & 0.830        & 0.824          \\ \hline
+    \multicolumn{1}{|c|}{Precision} & 0.800        & 0.860          \\ \hline
+    \multicolumn{1}{|c|}{Recall}    & 0.869        & 0.856          \\ \hline
+    \multicolumn{1}{|c|}{Accuracy}  & 92.7\%       & 86.6\%         \\ \hline
+    \end{tabular}
+    \label{tab:eval}
+\end{table}
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[b]{0.3\textwidth}
+        \includegraphics[width=\textwidth]{images/seg_cm}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \includegraphics[width=\textwidth]{images/class_cm}
+    \end{subfigure}
+    \caption{Confusion Matrices for the segmentation (above) and classification (below) models on the validation sessions. Values are normalized over the true labels (rows).}
+    \label{fig:cms}
+\end{figure}
 
 \subsection{Edge Deployment Performance}
 
