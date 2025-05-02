@@ -128,7 +128,7 @@ Several steps were taken to process the raw IMU data and prepare it for model tr
 
 
 \subsubsection{Data Cleaning}
-First, to resolve flunctuations in data sampling rate caused by the Raspberry Pi's CPU load, the 6-channel timeseries data was first interpolated to exactly 100 Hz. Next, the data was smoothed with a 15-data point (150 ms) moving average filter to remove signal noise. The data annotations were adjusted as well. Manual inspection of the timeseries signals was used to adjust any incorrect end-of-rep annotations to the true end of the rep. A full set of curls after cleaning, along with the data annotations, can be seen in Figure \ref{fig:full_set}.
+First, to resolve fluctuations in data sampling rate caused by the Raspberry Pi's CPU load, the 6-channel timeseries data was first interpolated to exactly 100 Hz. Next, the data was smoothed with a 15-data point (150 ms) moving average filter to remove signal noise. The data annotations were adjusted as well. Manual inspection of the timeseries signals was used to adjust any incorrect end-of-rep annotations to the true end of the rep. A full set of curls after cleaning, along with the data annotations, can be seen in Figure \ref{fig:full_set}.
 
 \subsubsection{Splitting \& Windowing}
 To facilitate model training, the collected data was split into train and validation splits. About 80\% of the recorded preacher curl sets (53) were added to the train set. The remaining 20\% of sets (15) were added to the validation split. Next, the data in each split was windowed into 256 data-point (2.56s) segments, with a stride of 2 data points (20 ms). Each window was labelled based on the end-rep-marker annotations, as will be explored. In total, about 90k training windows and 26k validation windows were generated.
@@ -244,14 +244,7 @@ In the case of the classification model, the model made predictions using up to 
 \end{figure}
 
 \subsection{Edge Deployment}
-The preexisting data collection dashboard was adapted for performing inference on a live set. After starting a session, 256 IMU samples are saved to build the first input window for the model. After that, a window is created with the previous window's oldest 64 samples discarded and every new 64 samples appended. These input windows accumulate to a max of 32, after which they are refreshed by new windows in a similar manner.
-
-\begin{figure}
-    \centering
-    \includegraphics[width=1\linewidth]{images/deployed_model_latency}
-    \caption{\textbf{Deployed model latency.} 100 predictions were made, 69 of which were made on a full list of 32 input windows. The average latency of those 69 predictions was used for this figure's last data point.}
-    \label{fig:deployed_model_latency}
-\end{figure}
+To deploy the model on the edge, the preexisting data collection server on the Raspberry Pi was adapted to perform inference on a live set. After starting a session, 256 IMU samples are saved to build the first input window for the model. After that, each new window is created by discarding the most recent window's oldest 64 samples and appending the most recently recorded 64 samples from the IMU. These input windows accumulate to a max of 32, after which they are refreshed by new windows in a similar manner.
 
 \section{Results}
 The segmentation and classification models were evaluated on the validation sessions, simulating real-time inference as described in Section \ref{sec:model_evaluation}. The segmentation model achieved an average F1 score of 0.83 and accuracy of 92.8\%. The classification model achieved an average F1 score of 0.82 and accuracy of 86.6\%. Table \ref{tab:eval} summarizes the average performances of the models over all the sessions, and the confusion matrices are shown in Figure \ref{fig:cms}.
@@ -268,8 +261,8 @@ The segmentation and classification models were evaluated on the validation sess
         \multicolumn{1}{|c|}{Recall}    & 0.869        & 0.856          \\ \hline
         \multicolumn{1}{|c|}{Accuracy}  & 92.7\%       & 86.6\%         \\ \hline
     \end{tabular}
-    \label{tab:eval}
     \caption{\textbf{Model performance.} The average F1 score, precision, recall, and accuracy of the segmentation and classification models over each session in the validation dataset.}
+    \label{tab:eval}
 \end{table}
 
 \begin{figure}
@@ -286,7 +279,14 @@ The segmentation and classification models were evaluated on the validation sess
 \end{figure}
 
 \subsection{Edge Deployment Performance}
-The model runs inference on the growing list of windows, from length 1 to length 32. The average inference latency therefore increases as more windows are accumulated and finally settles once the max of 32 is reached. On the Raspberry Pi 5, the model performed inference throughout a live set with an average latency across 100 predictions of 112.01 milliseconds, visualized in Figure \ref{fig:deployed_model_latency}. Using PyTorch profiling, the convolution operator and the RNN operator cost 45.81 percent and 26.63 percent of inference CPU time, respectively.
+The final model was 20Mb in size, and was deployed on the Raspberry Pi for inference. The model runs inference on the growing list of windows, from length 1 to length 32. The average inference latency therefore increases as more windows are accumulated and finally settles once the max of 32 is reached. On the Raspberry Pi 5, the model performed inference throughout a live set with an average latency across 100 predictions of 112.01 milliseconds, visualized in Figure \ref{fig:deployed_model_latency}. Using PyTorch profiling, the convolution operator and the RNN operator cost 45.81 percent and 26.63 percent of inference CPU time, respectively.
+
+\begin{figure}[b]
+    \centering
+    \includegraphics[width=1\linewidth]{images/deployed_model_latency}
+    \caption{\textbf{Deployed model latency.} 100 predictions were made in this session, 69 of which were made on a full list of 32 input windows. The average latency of those 69 predictions was used for this figure's last data point.}
+    \label{fig:deployed_model_latency}
+\end{figure}
 
 \section{Discussion}
 
