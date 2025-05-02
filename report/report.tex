@@ -124,7 +124,7 @@ In total, 13 participants performed 68 sets of preacher curls, with an length of
 Several steps were taken to process the raw IMU data and prepare it for model training. 
 
 \subsubsection{Data Cleaning}
-First, to resolve flunctuations in data sampling rate caused by the Raspberry Pi's CPU load, the 6-channel timeseries data was first interpolated to exactly 100 Hz. Next, the data was smoothed with a 15-data point (150 ms) moving average filter to remove signal noise. The data annotations were adjusted as well. Manual inspection of the timeseries signals was used to adjust any incorrect end-of-rep annotations to the true end of the rep. A full set of curls after cleaning, along with the data annotations, can be seen in Figure \ref{fig:full_set}.
+First, to resolve fluctuations in data sampling rate caused by the Raspberry Pi's CPU load, the 6-channel timeseries data was first interpolated to exactly 100 Hz. Next, the data was smoothed with a 15-data point (150 ms) moving average filter to remove signal noise. The data annotations were adjusted as well. Manual inspection of the timeseries signals was used to adjust any incorrect end-of-rep annotations to the true end of the rep. A full set of curls after cleaning, along with the data annotations, can be seen in Figure \ref{fig:full_set}.
 
 \subsubsection{Splitting \& Windowing}
 To facilitate model training, the collected data was split into train and validation splits. About 80\% of the recorded preacher curl sets (53) were added to the train set. The remaining 20\% of sets (15) were added to the validation split. Next, the data in each split was windowed into 256 data-point (2.56s) segments, with a stride of 2 data points (20 ms). Each window was labelled based on the end-rep-marker annotations, as will be explored. In total, about 90k training windows and 26k validation windows were generated.
@@ -242,7 +242,7 @@ The preexisting data collection dashboard was adapted for performing inference o
 \begin{figure}
     \centering
     \includegraphics[width=1\linewidth]{images/deployed_model_latency}
-    \caption{\textbf{Deployed model latency.} 100 predictions were made, 69 of which were made on a full list of 32 input windows. The average latency of those 69 predictions was used for this figure's last data point.}
+    \caption{\textbf{Deployed model latency.} 100 predictions were made in this session, 69 of which were made on a full list of 32 input windows. The average latency of those 69 predictions was used for this figure's last data point.}
     \label{fig:deployed_model_latency}
 \end{figure}
 
@@ -279,7 +279,7 @@ The segmentation and classification models were evaluated on the validation sess
 \end{figure}
 
 \subsection{Edge Deployment Performance}
-The model runs inference on the growing list of windows, from length 1 to length 32. The average inference latency therefore increases as more windows are accumulated and finally settles once the max of 32 is reached. On the Raspberry Pi 5, the model performed inference throughout a live set with an average latency across 100 predictions of 112.01 milliseconds, visualized in Figure \ref{fig:deployed_model_latency}. Using PyTorch profiling, the mkldnn_convolution operator and the mkldnn_rnn_layer cost 45.81 percent and 26.63 percent of inference CPU time, respectively.
+The model runs inference on the growing list of windows, from length 1 to length 32. The average inference latency therefore increases as more windows are accumulated and finally settles once the max of 32 is reached. On the Raspberry Pi 5, the model performed inference throughout a live set with an average latency across 100 predictions of 112.01 milliseconds, visualized in Figure \ref{fig:deployed_model_latency}. Using PyTorch profiling, the convolution operator and the RNN operator 45.81 percent and 26.63 percent of inference CPU time, respectively.
 
 \section{Discussion}
 
