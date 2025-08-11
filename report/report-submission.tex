@@ -27,7 +27,7 @@
 \pagestyle{plain}
 
 \begin{abstract}
-    Optimizing resistance training for hypertrophy requires balancing proximity to muscular failure, often quantified by Repetitions in Reserve (RiR), with fatigue management. However, subjective RiR assessment is unreliable, leading to suboptimal training stimuli or excessive fatigue. This paper introduces a novel system for real-time feedback on near-failure states (RiR $\le$ 2) during resistance exercise using only a single wrist-mounted Inertial Measurement Unit (IMU). We propose a two-stage pipeline suitable for edge deployment: first, a ResNet-based model segments repetitions from the 6-axis IMU data in real-time. Second, features derived from this segmentation, alongside direct convolutional features and historical context captured by an LSTM, are used by a classification model to identify exercise windows corresponding to near-failure states. Using a newly collected dataset from 13 diverse participants performing preacher curls to failure (631 total reps), our segmentation model achieved an F1 score of 0.83, and the near-failure classifier achieved an F1 score of 0.82 under simulated real-time evaluation conditions (1.6 Hz inference rate). Deployment on a Raspberry Pi 5 yielded an average inference latency of 112 ms, and on an iPhone 16 yielded 33.7 ms, confirming the feasibility for edge computation. This work demonstrates a practical approach for objective, real-time training intensity feedback using minimal hardware, paving the way for accessible AI-driven hypertrophy coaching tools that help users manage intensity and fatigue effectively.
+    Optimizing resistance training for hypertrophy requires balancing proximity to muscular failure, often quantified by Repetitions in Reserve (RiR), with fatigue management. However, subjective RiR assessment is unreliable, leading to suboptimal training stimuli or excessive fatigue. This paper introduces a novel system for real-time feedback on near-failure states (RiR $\le$ 2) during resistance exercise using only a single wrist-mounted Inertial Measurement Unit (IMU). We propose a two-stage pipeline suitable for edge deployment: first, a ResNet-based model segments repetitions from the 6-axis IMU data in real-time. Second, features derived from this segmentation, alongside direct convolutional features and historical context captured by an LSTM, are used by a classification model to identify exercise windows corresponding to near-failure states. Using a newly collected dataset from 13 diverse participants performing preacher curls to failure (631 total reps), our segmentation model achieved an F1 score of 0.83, and the near-failure classifier achieved an F1 score of 0.82 under simulated real-time evaluation conditions (1.6 Hz inference rate). Deployment on a Raspberry Pi 5 yielded an average inference latency of 112 ms, and on an iPhone 16 yielded 23.5 ms, confirming the feasibility for edge computation. This work demonstrates a practical approach for objective, real-time training intensity feedback using minimal hardware, paving the way for accessible AI-driven hypertrophy coaching tools that help users manage intensity and fatigue effectively.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -175,11 +175,10 @@ During optimization, all models were trained until the validation F1 score showe
 \subsection{Model Training}
 Models were trained using the AdamW optimizer with learning rates of 4.3e-3 (segmentation model) and 7.9e-4 (classification model). The segmentation model was optimized with a combination of Binary Cross Entropy and Mean Squared Error loss, as shown in Equation \ref{eq:seg_loss}, where $\alpha=0.8$. The classification model was optimized with Binary Cross Entropy loss. The models were trained for 50 epochs or until validation F1 score stopped improving (resulting in 35 epochs for the segmentation model and 4 for the classification model). Both models were trained with a batch size of 128 on a single NVIDIA RTX 4090 GPU using the Pytorch library \cite{paszke_2019}. 
 
-\begin{multline}
-    \small
-    \text{Loss}(\hat y, y) = \\ \frac{1}{N} \sum_{i=1}^{N} \left( \alpha\cdot\text{BCE}(y_i, \hat y_i) + (1-\alpha)\frac{1}{256} \sum_{j=1}^{256} (\hat y_{ij} - y_{ij})^2 \right)
-    \label{eq:seg_loss}
-\end{multline}
+\begin{myequation}%
+Loss = \frac{1}{N} \sum_{i=1}^{N} \left( \alpha\cdot\text{BCE}(y_i, \hat y_i) + (1-\alpha)\frac{1}{256} \sum_{j=1}^{256} (\hat y_{ij} - y_{ij})^2 \right) %
+\end{myequation}
+%
 
 The segmentation model was trained on batches of individual windows of data from the train dataset. The classification model, on the other hand, was trained on batches of multiple windows of data. Each element of a batch was a set of $T=32$ concurrent windows, with a stride of 64. The total length of each of these sequences, accounting for overlap, is 2240 data points (22.4 seconds). For each sequence, the model was trained to predict the class of each window in the sequence using an LSTM with information flowing only from past windows to the future. In this way, the model was trained to make predictions using 1 up to 32 windows of data. It was also validated in this way, ensuring the model's performance was not reliant on having all 32 windows available at once. This is important for real-time inference, as the model must be able to make predictions on each window as it arrives.
 
@@ -249,14 +248,14 @@ The segmentation and classification models were evaluated on the validation sess
 \end{figure}
 
 \subsection{Edge Deployment Performance}
-The final model was 20Mb in size, and was deployed on the Raspberry Pi for inference. The model runs inference on the growing list of windows, from length 1 to length 32. The average inference latency therefore increases as more windows are accumulated and finally settles once the max of 32 is reached. On the Raspberry Pi 5, the model performed inference throughout a live set with an average latency across 100 predictions of 112.01 milliseconds, visualized in Figure \ref{fig:deployed_model_latency}. Using PyTorch profiling, the convolution operator and the RNN operator cost 45.81 percent and 26.63 percent of inference CPU time, respectively.
+The final model was 20Mb in size, and was deployed on the Raspberry Pi for inference. The model runs inference on the growing list of windows, from length 1 to length 32. The average inference latency therefore increases as more windows are accumulated and finally settles once the max of 32 is reached. On the Raspberry Pi 5, the model performed inference throughout a live set with an average latency of 112.01 milliseconds (130.03 for 32-window inputs), visualized in Figure \ref{fig:deployed_model_latency}. Using PyTorch profiling, the convolution operator and the RNN operator cost 45.81 percent and 26.63 percent of inference CPU time, respectively.
 
-The iPhone 16 deployment saw an average inference latency of 33.7 milliseconds. Of that, 20.76 milliseconds were spent in the encoder, 2.18 milliseconds in the now-separated "time-in-rep" function, and 10.76 milliseconds in the LSTM, on average.
+The iPhone 16 deployment saw an average inference latency of 23.5 milliseconds (35.19 for 32-window inputs). Of that, 14.05 milliseconds were spent in the encoder, 1.51 milliseconds in the now-separated "time-in-rep" function, and 7.94 milliseconds in the LSTM, on average.
 
 \begin{figure}[b]
     \centering
     \includegraphics[width=1\linewidth]{images/deployed_model_latency}
-    \caption{\textbf{Deployed model latency on Raspberry Pi.} 100 predictions were made in this session, 69 of which were made on a full list of 32 input windows. The average latency of those 69 predictions was used for this figure's last data point.}
+    \caption{\textbf{Deployed model latency on Raspberry Pi and iPhone.} Inference latency ranging from one-window input to 32 windows.}
     \label{fig:deployed_model_latency}
 \end{figure}
 
@@ -271,7 +270,7 @@ The segmentation model's real-time rep counting capability enables precise track
 
 Deployment on a Raspberry Pi 5 (inference latency: 112 ms, model size: 20 MB) validates the system's suitability for low-power, portable applications. Unlike cloud-dependent solutions, edge processing ensures privacy-preserving operation in environments with limited connectivity, such as commercial gyms or home setups. The 640 ms update stride (1.56 Hz) and low model latency of 112 ms provides timely feedback without overwhelming users, striking a balance between responsiveness and computational efficiency.
 
-Deployment on iPhone 16 and Apple Watch Series 10 ensured timely predictions (20.76 ms average inference latency) on realistic target devices. The approach of running inference on the more capable phone results in this low latency as well as lower battery usage on the watch, but introduces application complexity.
+Deployment on iPhone 16 and Apple Watch Series 10 ensured timely predictions (23.5 ms average inference latency) on realistic target devices. The approach of running inference on the more capable phone results in this low latency as well as lower battery usage on the watch, but introduces application complexity.
 
 \subsection{Limitations and Future Directions}
 While promising, the study has limitations. First, data collection focused solely on preacher curls. Future work should validate generalizability to compound movements (e.g., squats, bench presses) where fatigue manifests differently \cite{velloso2013qualitative}. Second, our models were trained on a limited number of participants (13), which may not capture the full spectrum of lifting styles and fatigue responses. Expanding the dataset to include diverse populations, such as older adults or individuals with disabilities, is essential for broader applicability. Third, instead of using the Raspberry Pi, collecting training data with an Apple Watch directly or other target wearable would reduce data collection complexity and improve deployment accuracy.
